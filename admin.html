@@ -17,7 +17,7 @@
         .mobile-header button { background: transparent; border: none; color: white; font-size: 24px; cursor: pointer; }
 
         /* Sidebar */
-        .sidebar { width: 260px; background: var(--card); padding: 20px; border-right: 1px solid var(--border); transition: 0.3s; display: flex; flex-direction: column; z-index: 1000; }
+        .sidebar { width: 260px; background: var(--card); padding: 20px; border-right: 1px solid var(--border); transition: 0.3s; display: flex; flex-direction: column; z-index: 1000; overflow-y: auto; }
         .sidebar-logo { color: var(--yellow); font-size: 20px; text-align: center; margin-bottom: 30px; font-weight: 600; }
         .menu-btn { width: 100%; padding: 12px 15px; margin-bottom: 8px; background: transparent; border: none; text-align: left; cursor: pointer; font-size: 15px; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; gap: 10px; color: var(--muted); }
         .menu-btn:hover, .menu-btn.active { background: var(--blue); color: white; }
@@ -27,22 +27,25 @@
 
         /* Content */
         .content { flex: 1; padding: 25px; overflow-y: auto; height: 100vh; }
-        .section { display: none; }
+        .section { display: none; animation: fadeIn 0.4s ease; }
         .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .section-header { margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .section-header h3 { font-size: 22px; font-weight: 600; }
+        
         .form-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); max-width: 600px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 8px; font-size: 13px; color: var(--muted); }
         input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: white; outline: none; font-size: 14px; }
-        button.submit-btn { width: 100%; padding: 12px; background: var(--blue); border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; font-size: 15px; }
+        button.submit-btn { width: 100%; padding: 12px; background: var(--blue); border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; font-size: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; }
         
         .table-wrapper { width: 100%; overflow-x: auto; background: var(--card); border-radius: 12px; border: 1px solid var(--border); margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
         th { background: #111827; color: var(--muted); }
         
-        #statusToast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); padding: 12px 25px; border-radius: 30px; font-size: 14px; transition: 0.4s; z-index: 2000; }
+        #statusToast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); padding: 12px 25px; border-radius: 30px; font-size: 14px; transition: 0.4s; z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         #statusToast.show { bottom: 30px; }
 
         @media (max-width: 768px) {
@@ -51,7 +54,7 @@
             .sidebar { position: fixed; left: -260px; top: 0; height: 100vh; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
             .sidebar.active { left: 0; }
             .close-sidebar { display: block; }
-            .content { padding: 15px; }
+            .content { padding: 15px; padding-bottom: 80px; }
         }
     </style>
 </head>
@@ -63,7 +66,7 @@
             const role = localStorage.getItem("codenix_user_role");
             if (role !== "Admin") {
                 alert("⚠️ Access Denied! Sirf Admin hi yahan aa sakte hain.");
-                window.location.href = "codenixhindi.html";
+                window.location.href = "codenixhindi.html"; // Aapki file ka naam
             }
         };
     </script>
@@ -81,29 +84,121 @@
         <button class="menu-btn active" onclick="openTab('addVideo')"><i class="fas fa-video"></i> Videos / Live</button>
         <button class="menu-btn" onclick="openTab('addNote')"><i class="fas fa-file-pdf"></i> PDF Notes</button>
         <button class="menu-btn" onclick="openTab('addBanner')"><i class="fas fa-image"></i> App Banners</button>
+        <button class="menu-btn" onclick="openTab('addQuiz')"><i class="fas fa-question-circle"></i> Add Quiz</button>
         <button class="menu-btn" onclick="openTab('manageUsers'); loadUsers()"><i class="fas fa-users"></i> Manage Users</button>
     </div>
 
     <div class="content">
+        
         <div id="addVideo" class="section active">
             <div class="section-header"><h3><i class="fas fa-video"></i> Upload Video or Live Class</h3></div>
             <div class="form-card">
                 <form onsubmit="submitForm(event, 'Videos', 'videoForm')">
-                    <div class="form-group"><label>Video Title</label><input type="text" id="vid_VideoTitle" required></div>
-                    <div class="form-group"><label>YouTube Link</label><input type="url" id="vid_YouTubeLink" required></div>
-                    <div class="form-group"><label>Category</label><select id="vid_Category"><option value="HTML">HTML</option><option value="LIVE">LIVE</option></select></div>
-                    <button type="submit" class="submit-btn">Publish Video</button>
+                    <div class="form-group"><label>Video Title</label><input type="text" id="vid_VideoTitle" placeholder="e.g. HTML Part 1" required></div>
+                    <div class="form-group"><label>YouTube Link</label><input type="url" id="vid_YouTubeLink" placeholder="https://youtube.com/..." required></div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="vid_Category">
+                            <option value="HTML">HTML Course</option>
+                            <option value="CSS">CSS Course</option>
+                            <option value="JavaScript">JS Course</option>
+                            <option value="LIVE">🔴 LIVE CLASS</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="submit-btn"><i class="fas fa-upload"></i> Publish Video</button>
                 </form>
             </div>
         </div>
-        
+
+        <div id="addNote" class="section">
+            <div class="section-header"><h3><i class="fas fa-file-pdf"></i> Upload PDF Notes</h3></div>
+            <div class="form-card">
+                <form onsubmit="submitForm(event, 'Notes', 'noteForm')">
+                    <div class="form-group"><label>Note Title</label><input type="text" id="note_Title" placeholder="e.g. CSS Chapter 1 Notes" required></div>
+                    <div class="form-group"><label>Google Drive PDF Link</label><input type="url" id="note_DriveLink" placeholder="https://drive.google.com/..." required></div>
+                    <button type="submit" class="submit-btn" style="background: var(--green);"><i class="fas fa-file-upload"></i> Publish Notes</button>
+                </form>
+            </div>
         </div>
 
-    <div id="statusToast">✅ Success!</div>
+        <div id="addBanner" class="section">
+            <div class="section-header"><h3><i class="fas fa-image"></i> Add App Banner</h3></div>
+            <div class="form-card">
+                <form onsubmit="submitForm(event, 'Banners', 'bannerForm')">
+                    <div class="form-group"><label>Image URL</label><input type="url" id="ban_ImageURL" placeholder="Paste Image Link Here" required></div>
+                    <div class="form-group"><label>Action Link (Optional)</label><input type="url" id="ban_ActionLink" placeholder="Link to open on click"></div>
+                    <button type="submit" class="submit-btn" style="background: #f59e0b; color: #000;"><i class="fas fa-bullhorn"></i> Set Banner</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="addQuiz" class="section">
+            <div class="section-header"><h3><i class="fas fa-question-circle"></i> Add New Quiz</h3></div>
+            <div class="form-card">
+                <form onsubmit="submitForm(event, 'Quiz', 'quizForm')">
+                    <div class="form-group"><label>Question</label><input type="text" id="quiz_Question" placeholder="e.g. HTML ka full form kya hai?" required></div>
+                    
+                    <div style="display:flex; gap:10px;">
+                        <div class="form-group" style="flex:1;"><label>Option A</label><input type="text" id="quiz_OptA" required></div>
+                        <div class="form-group" style="flex:1;"><label>Option B</label><input type="text" id="quiz_OptB" required></div>
+                    </div>
+                    
+                    <div style="display:flex; gap:10px;">
+                        <div class="form-group" style="flex:1;"><label>Option C</label><input type="text" id="quiz_OptC" required></div>
+                        <div class="form-group" style="flex:1;"><label>Option D</label><input type="text" id="quiz_OptD" required></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Correct Answer</label>
+                        <select id="quiz_Correct">
+                            <option value="A">Option A</option>
+                            <option value="B">Option B</option>
+                            <option value="C">Option C</option>
+                            <option value="D">Option D</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Category (Kiska Quiz hai?)</label>
+                        <select id="quiz_Category">
+                            <option value="HTML">HTML</option>
+                            <option value="CSS">CSS</option>
+                            <option value="JavaScript">JavaScript</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="submit-btn" style="background: #8b5cf6;"><i class="fas fa-plus"></i> Publish Quiz</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="manageUsers" class="section">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3><i class="fas fa-users"></i> App Users</h3>
+                <button onclick="loadUsers()" style="background: var(--blue); border: none; padding: 8px 15px; border-radius: 6px; color: white; cursor: pointer;"><i class="fas fa-sync"></i> Refresh</button>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Name</th><th>Email</th><th>Role</th></tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr><td colspan="3" style="text-align: center;">Click refresh to load...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="statusToast">✅ Success Message Here</div>
 
     <script>
+        // AAPKA GOOGLE SCRIPT LINK YAHAN HAI
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydtK9KUc2ytUW42MPoMFvlU87zjVP0SF1C-8O-GWRKJvQ_dIP-aCE3ht4A8IrH56berQ/exec";
 
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
         function toggleSidebar() {
             sidebar.classList.toggle('active');
             overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
@@ -111,11 +206,77 @@
 
         function openTab(tabName) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
             if(window.innerWidth <= 768) toggleSidebar();
         }
-        
-        // ... (Baaki saare Functions: submitForm, loadUsers, showToast yahan paste karein)
+
+        function showToast(msg, color) {
+            const toast = document.getElementById('statusToast');
+            toast.innerText = msg;
+            toast.style.color = color;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        // --- DATA BHEJNE WALA MAIN FUNCTION ---
+        async function submitForm(e, sheetName, formType) {
+            e.preventDefault();
+            showToast("⏳ Uploading " + sheetName + "... Please wait.", "#facc15");
+
+            let data = {};
+            if(formType === 'videoForm') {
+                data = { VideoTitle: document.getElementById('vid_VideoTitle').value, YouTubeLink: document.getElementById('vid_YouTubeLink').value, Category: document.getElementById('vid_Category').value };
+            } else if(formType === 'noteForm') {
+                data = { NoteTitle: document.getElementById('note_Title').value, PDFLink: document.getElementById('note_DriveLink').value };
+            } else if(formType === 'bannerForm') {
+                data = { ImageURL: document.getElementById('ban_ImageURL').value, ActionLink: document.getElementById('ban_ActionLink').value };
+            } else if(formType === 'quizForm') {
+                data = { 
+                    Question: document.getElementById('quiz_Question').value, 
+                    OptionA: document.getElementById('quiz_OptA').value,
+                    OptionB: document.getElementById('quiz_OptB').value,
+                    OptionC: document.getElementById('quiz_OptC').value,
+                    OptionD: document.getElementById('quiz_OptD').value,
+                    CorrectAnswer: document.getElementById('quiz_Correct').value,
+                    Category: document.getElementById('quiz_Category').value
+                };
+            }
+
+            try {
+                const response = await fetch(SCRIPT_URL + "?sheet=" + sheetName, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                const result = await response.text();
+                
+                if(result === "Success") {
+                    showToast("✅ " + sheetName + " uploaded to App!", "#10b981");
+                    e.target.reset(); // Form khali kar dega
+                } else {
+                    showToast("❌ Error uploading data.", "#ef4444");
+                }
+            } catch (error) {
+                showToast("❌ Internet Error. Please try again.", "#ef4444");
+            }
+        }
+
+        async function loadUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>⏳ Fetching users...</td></tr>";
+            try {
+                const response = await fetch(SCRIPT_URL + "?sheet=Users");
+                const users = await response.json();
+                tbody.innerHTML = "";
+                users.forEach(user => {
+                    if(!user.Name) return;
+                    tbody.innerHTML += `<tr><td>${user.Name}</td><td>${user.Email}</td><td><span style="color:var(--blue); font-weight:600;">${user.Role || 'Student'}</span></td></tr>`;
+                });
+            } catch (error) {
+                tbody.innerHTML = "<tr><td colspan='3' style='color:red;'>❌ Failed to load users.</td></tr>";
+            }
+        }
     </script>
 </body>
 </html>
