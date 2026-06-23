@@ -1,7 +1,7 @@
 {
   "name": "Codenix Hindi Pro",
   "short_name": "Codenix",
-  "start_url": "index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#050b14",
   "theme_color": "#2563eb",
@@ -10,12 +10,14 @@
     {
       "src": "Logo.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "Logo.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
