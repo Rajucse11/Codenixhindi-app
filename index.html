@@ -1,95 +1,320 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<link rel="icon" type="image/png" sizes="192x192" href="logo-192.png">
-<link rel="apple-touch-icon" href="logo-192.png">
-<link rel="manifest" href="manifest.json">
-
-
-
+    <link rel="icon" type="image/png" sizes="192x192" href="logo-192.png">
+    <link rel="apple-touch-icon" href="logo-192.png">
+    <link rel="manifest" href="manifest.json">
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Codenix Hindi</title>
+    <title>Login - CodeNix Hindi</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        :root { --bg: #050b14; --card-glass: rgba(15, 23, 42, 0.8); --blue: #2563eb; --yellow: #facc15; --text: #ffffff; --muted: #94a3b8; --border: rgba(255, 255, 255, 0.1); }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; color: var(--text); }
+        :root { 
+            --primary: #0a47b8; /* Match image blue */
+            --primary-hover: #083896;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --bg-body: #f1f5f9;
+            --success: #10b981;
+            --error: #ef4444;
+        }
         
-        body { background: var(--bg); height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; background-image: radial-gradient(circle at top right, rgba(37,99,235,0.2), transparent 40%), radial-gradient(circle at bottom left, rgba(250,204,21,0.1), transparent 40%); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         
-        .auth-container { background: var(--card-glass); backdrop-filter: blur(15px); border: 1px solid var(--border); padding: 40px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: center; }
-        
-        .logo { font-size: 24px; font-weight: 700; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .logo i { color: var(--blue); font-size: 28px; }
-        .logo span { color: var(--yellow); font-size: 14px; }
+        body { 
+            background-color: var(--bg-body); 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px;
+        }
 
-        /* Tabs */
-        .tabs { display: flex; background: rgba(0,0,0,0.3); border-radius: 10px; margin-bottom: 25px; padding: 5px; }
-        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--muted); font-weight: 600; cursor: pointer; border-radius: 8px; transition: 0.3s; font-size: 14px; }
-        .tab-btn.active { background: var(--blue); color: white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); }
+        /* Main Container - 2 Column Layout */
+        .main-container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 1100px;
+            min-height: 650px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Left Panel (Blue Side) --- */
+        .left-panel {
+            flex: 0 0 45%;
+            background: linear-gradient(145deg, #0a47b8, #1e3a8a);
+            padding: 50px 40px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background Graphics for Left Panel */
+        .left-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            right: -50px;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+
+        .logo { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-bottom: 50px; z-index: 1; }
+        .logo i { font-size: 24px; }
+        
+        .welcome-text h1 { font-size: 32px; font-weight: 600; margin-bottom: 10px; z-index: 1; position: relative; }
+        .welcome-text p { font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 40px; z-index: 1; position: relative; }
+
+        /* Illustration Placeholder */
+        .illustration { text-align: center; margin-bottom: 40px; z-index: 1; position: relative; }
+        .illustration i { font-size: 120px; color: rgba(255,255,255,0.9); filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2)); }
+
+        .features { display: flex; flex-direction: column; gap: 20px; z-index: 1; position: relative; }
+        .feature-item { display: flex; align-items: flex-start; gap: 15px; }
+        .feature-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 16px; flex-shrink: 0; }
+        .feature-text h4 { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+        .feature-text p { font-size: 12px; color: rgba(255,255,255,0.7); }
+
+        /* --- Right Panel (White Form Side) --- */
+        .right-panel {
+            flex: 1;
+            padding: 40px 80px;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+        }
+
+        /* Top Tabs */
+        .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 40px; }
+        .tab-btn { flex: 1; text-align: center; padding: 15px 0; cursor: pointer; font-weight: 500; color: var(--text-light); transition: 0.3s; position: relative; }
+        .tab-btn.active { color: var(--primary); font-weight: 600; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px; background: var(--primary); }
+
+        /* Form Header */
+        .form-header { text-align: center; margin-bottom: 30px; }
+        .form-header h2 { font-size: 28px; color: var(--text-dark); font-weight: 600; margin-bottom: 8px; }
+        .form-header p { font-size: 14px; color: var(--text-light); }
 
         /* Forms */
-        form { display: none; text-align: left; animation: fadeIn 0.4s; }
+        form { display: none; animation: fadeIn 0.4s ease; }
         form.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .input-group { margin-bottom: 18px; position: relative; }
-        .input-group i { position: absolute; left: 15px; top: 15px; color: var(--muted); }
-        .input-group input { width: 100%; padding: 12px 15px 12px 45px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 10px; color: white; outline: none; font-size: 14px; transition: 0.3s; }
-        .input-group input:focus { border-color: var(--blue); background: rgba(0,0,0,0.6); }
+        /* Input Fields */
+        .input-group { margin-bottom: 20px; position: relative; }
+        .input-group label { display: block; font-size: 13px; font-weight: 500; color: var(--text-dark); margin-bottom: 8px; }
+        .input-wrapper { position: relative; }
+        .input-wrapper i.icon-left { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .input-wrapper input { width: 100%; padding: 14px 15px 14px 45px; border: 1.5px solid var(--border); border-radius: 8px; outline: none; font-size: 14px; color: var(--text-dark); transition: 0.3s; }
+        .input-wrapper input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(10, 71, 184, 0.1); }
+        
+        /* Toggle Password */
+        .toggle-password { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); cursor: pointer; }
+        .toggle-password:hover { color: var(--text-dark); }
 
-        .submit-btn { width: 100%; padding: 12px; background: var(--blue); border: none; border-radius: 10px; color: white; font-weight: 600; font-size: 15px; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .submit-btn:hover { background: #1d4ed8; transform: translateY(-2px); }
+        /* Forgot Password */
+        .forgot-pass { display: block; text-align: right; color: var(--primary); font-size: 13px; font-weight: 500; text-decoration: none; margin-top: -5px; margin-bottom: 25px; }
+        .forgot-pass:hover { text-decoration: underline; }
 
-        #statusMsg { margin-top: 15px; font-size: 13px; font-weight: 500; height: 20px; }
+        /* Submit Button */
+        .submit-btn { width: 100%; padding: 15px; background: var(--primary); border: none; border-radius: 8px; color: white; font-weight: 600; font-size: 15px; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .submit-btn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(10, 71, 184, 0.2); }
+        .submit-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        /* Spinner for Button */
+        .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .submit-btn.loading .btn-text { display: none; }
+        .submit-btn.loading .spinner { display: block; }
+
+        /* Social Login Divider */
+        .divider { display: flex; align-items: center; text-align: center; margin: 30px 0; color: var(--text-light); font-size: 13px; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
+        .divider span { padding: 0 15px; }
+
+        /* Social Buttons */
+        .social-group { display: flex; gap: 15px; }
+        .social-btn { flex: 1; padding: 12px; background: white; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-dark); display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.3s; }
+        .social-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+        .social-btn i.fa-google { color: #db4437; }
+        .social-btn i.fa-facebook { color: #1877f2; }
+
+        /* Bottom Text */
+        .bottom-text { text-align: center; margin-top: 30px; font-size: 14px; color: var(--text-light); }
+        .bottom-text span { color: var(--primary); font-weight: 500; cursor: pointer; }
+        .bottom-text span:hover { text-decoration: underline; }
+
+        /* Modern Toast Notification System */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: white; border-left: 4px solid; padding: 15px 20px; border-radius: 8px; color: var(--text-dark); font-size: 14px; font-weight: 500; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; animation: slideInRight 0.4s ease forwards; max-width: 300px; }
+        .toast.success { border-color: var(--success); }
+        .toast.success i { color: var(--success); }
+        .toast.error { border-color: var(--error); }
+        .toast.error i { color: var(--error); }
+        .toast.warning { border-color: #facc15; }
+        .toast.warning i { color: #facc15; }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .main-container { flex-direction: column; }
+            .left-panel { flex: none; padding: 40px 20px; }
+            .right-panel { padding: 30px 20px; }
+            .illustration { display: none; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="auth-container">
-        <div class="logo"><i class="fas fa-laptop-code"></i> CODENIX <span>HINDI</span></div>
+    <div id="toast-container"></div>
+
+    <div class="main-container">
         
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('login')">Login</button>
-            <button class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
+        <div class="left-panel">
+            <div class="logo"><i class="fas fa-code"></i> CodeNix Hindi</div>
+            
+            <div class="welcome-text">
+                <h1>Welcome Back!</h1>
+                <p>Sign in to continue to your account and explore amazing programming and development features.</p>
+            </div>
+
+            <div class="illustration">
+                <i class="fas fa-laptop-code"></i>
+            </div>
+
+            <div class="features">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                    <div class="feature-text">
+                        <h4>Secure & Safe</h4>
+                        <p>Your data is protected with top-level security.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                    <div class="feature-text">
+                        <h4>Fast & Reliable</h4>
+                        <p>Experience smooth performance every time.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-users"></i></div>
+                    <div class="feature-text">
+                        <h4>User Friendly</h4>
+                        <p>Designed for you to get things done easily.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <form id="loginForm" class="active">
-            <div class="input-group">
-                <i class="fas fa-envelope"></i>
-                <input type="email" id="logEmail" placeholder="Email Address" required>
+        <div class="right-panel">
+            
+            <div class="tabs">
+                <div class="tab-btn active" onclick="switchTab('login')">Login</div>
+                <div class="tab-btn" onclick="switchTab('signup')">Sign Up</div>
             </div>
-            <div class="input-group">
-                <i class="fas fa-lock"></i>
-                <input type="password" id="logPassword" placeholder="Password" required>
-            </div>
-            <button type="submit" class="submit-btn">Login to Dashboard <i class="fas fa-arrow-right"></i></button>
-        </form>
 
-        <form id="signupForm">
-            <div class="input-group">
-                <i class="fas fa-user"></i>
-                <input type="text" id="regName" placeholder="Full Name" required>
-            </div>
-            <div class="input-group">
-                <i class="fas fa-envelope"></i>
-                <input type="email" id="regEmail" placeholder="Email Address" required>
-            </div>
-            <div class="input-group">
-                <i class="fas fa-lock"></i>
-                <input type="password" id="regPassword" placeholder="Create Password" required>
-            </div>
-            <button type="submit" class="submit-btn">Create Account <i class="fas fa-user-plus"></i></button>
-        </form>
+            <form id="loginForm" class="active">
+                <div class="form-header">
+                    <h2 id="formTitle">Login</h2>
+                    <p>Enter your credentials to access your account</p>
+                </div>
 
-        <div id="statusMsg"></div>
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope icon-left"></i>
+                        <input type="email" id="logEmail" placeholder="Enter your email" required>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock icon-left"></i>
+                        <input type="password" id="logPassword" placeholder="Enter your password" required>
+                        <i class="fas fa-eye-slash toggle-password" onclick="togglePassword('logPassword', this)"></i>
+                    </div>
+                </div>
+                
+                <a href="#" class="forgot-pass">Forgot Password?</a>
+                
+                <button type="submit" class="submit-btn" id="loginBtn">
+                    <span class="spinner"></span>
+                    <span class="btn-text">Login</span>
+                </button>
+            </form>
+
+            <form id="signupForm">
+                <div class="form-header">
+                    <h2>Sign Up</h2>
+                    <p>Create a new account to join us</p>
+                </div>
+
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user icon-left"></i>
+                        <input type="text" id="regName" placeholder="Enter your full name" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope icon-left"></i>
+                        <input type="email" id="regEmail" placeholder="Enter your email" required>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock icon-left"></i>
+                        <input type="password" id="regPassword" placeholder="Create a password" required>
+                        <i class="fas fa-eye-slash toggle-password" onclick="togglePassword('regPassword', this)"></i>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="signupBtn">
+                    <span class="spinner"></span>
+                    <span class="btn-text">Create Account</span>
+                </button>
+            </form>
+
+            <div class="divider"><span>or continue with</span></div>
+            
+            <div class="social-group">
+                <button class="social-btn" id="googleLoginBtn" type="button" onclick="handleSocialLogin('Google')">
+                    <i class="fab fa-google"></i> Google
+                </button>
+                <button class="social-btn" id="facebookLoginBtn" type="button" onclick="handleSocialLogin('Facebook')">
+                    <i class="fab fa-facebook"></i> Facebook
+                </button>
+            </div>
+
+            <div class="bottom-text" id="bottomText">
+                Don't have an account? <span onclick="switchTab('signup')">Sign Up</span>
+            </div>
+
+        </div>
     </div>
 
     <script>
-        // --- AUTO LOGIN CHECK ---
+        // --- AUTO LOGIN CHECK (Data logic unchanged) ---
         window.onload = function() {
             const userName = localStorage.getItem("codenix_user_name");
             const userRole = localStorage.getItem("codenix_user_role");
@@ -105,31 +330,80 @@
 
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydtK9KUc2ytUW42MPoMFvlU87zjVP0SF1C-8O-GWRKJvQ_dIP-aCE3ht4A8IrH56berQ/exec";
 
+        // Tab Switching Logic
         function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            const btns = document.querySelectorAll('.tab-btn');
             document.querySelectorAll('form').forEach(f => f.classList.remove('active'));
+            btns.forEach(btn => btn.classList.remove('active'));
             
+            const bottomText = document.getElementById('bottomText');
+
             if(tab === 'login') {
-                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                btns[0].classList.add('active');
                 document.getElementById('loginForm').classList.add('active');
+                bottomText.innerHTML = `Don't have an account? <span onclick="switchTab('signup')">Sign Up</span>`;
             } else {
-                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                btns[1].classList.add('active');
                 document.getElementById('signupForm').classList.add('active');
+                bottomText.innerHTML = `Already have an account? <span onclick="switchTab('login')">Login</span>`;
             }
-            document.getElementById('statusMsg').innerText = "";
         }
 
-        function showMessage(msg, color) {
-            const statusDiv = document.getElementById('statusMsg');
-            statusDiv.innerText = msg;
-            statusDiv.style.color = color;
+        // Password Visibility Toggle
+        function togglePassword(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if(input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
         }
 
-        // --- SIGN UP LOGIC ---
+        // Modern Toast Notification
+        function showToast(message, type) {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let iconClass = 'fa-info-circle';
+            if(type === 'success') iconClass = 'fa-check-circle';
+            if(type === 'error') iconClass = 'fa-exclamation-circle';
+            if(type === 'warning') iconClass = 'fa-spinner fa-spin';
+
+            toast.innerHTML = `<i class="fas ${iconClass}"></i> <span>${message}</span>`;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.4s ease forwards';
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
+
+        function setLoading(btnId, isLoading) {
+            const btn = document.getElementById(btnId);
+            if(isLoading) {
+                btn.disabled = true;
+                btn.classList.add('loading');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+        }
+
+        // Firebase Setup Placeholder Alert
+        function handleSocialLogin(provider) {
+            showToast(`${provider} login UI is ready. Firebase integration will be added here next!`, "warning");
+        }
+
+        // --- SIGN UP LOGIC (Data logic unchanged) ---
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            showMessage("⏳ Creating account... Please wait.", "#facc15");
-            document.querySelector('#signupForm .submit-btn').disabled = true;
+            showToast("Creating account... Please wait.", "warning");
+            setLoading('signupBtn', true);
 
             const data = {
                 Name: document.getElementById('regName').value,
@@ -146,27 +420,27 @@
                 
                 const result = await response.text();
                 if(result === "Success") {
-                    showMessage("✅ Account Created! Redirecting...", "#10b981");
+                    showToast("Account Created! Redirecting...", "success");
                     
                     localStorage.setItem("codenix_user_name", data.Name);
                     localStorage.setItem("codenix_user_role", data.Role);
                     
                     setTimeout(() => { window.location.href = "codenixhindi.html"; }, 1500);
                 } else {
-                    showMessage("❌ Something went wrong.", "#ef4444");
-                    document.querySelector('#signupForm .submit-btn').disabled = false;
+                    showToast("Something went wrong.", "error");
+                    setLoading('signupBtn', false);
                 }
             } catch (error) {
-                showMessage("❌ Internet Connection Error.", "#ef4444");
-                document.querySelector('#signupForm .submit-btn').disabled = false;
+                showToast("Internet Connection Error.", "error");
+                setLoading('signupBtn', false);
             }
         });
 
-        // --- LOGIN LOGIC ---
+        // --- LOGIN LOGIC (Data logic unchanged) ---
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            showMessage("⏳ Verifying details...", "#facc15");
-            document.querySelector('#loginForm .submit-btn').disabled = true;
+            showToast("Verifying details...", "warning");
+            setLoading('loginBtn', true);
 
             const email = document.getElementById('logEmail').value;
             const pass = document.getElementById('logPassword').value;
@@ -178,7 +452,7 @@
                 const validUser = users.find(u => u.Email === email && u.Password === pass);
 
                 if(validUser) {
-                    showMessage("✅ Login Successful! Redirecting...", "#10b981");
+                    showToast("Login Successful! Redirecting...", "success");
                     
                     localStorage.setItem("codenix_user_name", validUser.Name);
                     localStorage.setItem("codenix_user_role", validUser.Role);
@@ -191,12 +465,12 @@
                         }
                     }, 1500);
                 } else {
-                    showMessage("❌ Invalid Email or Password.", "#ef4444");
-                    document.querySelector('#loginForm .submit-btn').disabled = false;
+                    showToast("Invalid Email or Password.", "error");
+                    setLoading('loginBtn', false);
                 }
             } catch (error) {
-                showMessage("❌ Internet Error.", "#ef4444");
-                document.querySelector('#loginForm .submit-btn').disabled = false;
+                showToast("Internet Error. Try again.", "error");
+                setLoading('loginBtn', false);
             }
         });
     </script>
