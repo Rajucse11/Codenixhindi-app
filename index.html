@@ -13,7 +13,7 @@
     
     <style>
         :root { 
-            --primary: #0a47b8; /* Match image blue */
+            --primary: #0a47b8; 
             --primary-hover: #083896;
             --text-dark: #1e293b;
             --text-light: #64748b;
@@ -313,29 +313,33 @@
         </div>
     </div>
 
-    <script>
-        // --- AUTO LOGIN CHECK (Data logic unchanged) ---
-        window.onload = function() {
-            const userName = localStorage.getItem("codenix_user_name");
-            const userRole = localStorage.getItem("codenix_user_role");
-            
-            if (userName && userRole) {
-                if(userRole === "Admin") {
-                    window.location.href = "admin.html";
-                } else {
-                    window.location.href = "codenixhindi.html";
-                }
-            }
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9dKvLboAoBF8q8rGcZ_DXvm9cYbzPlhM",
+            authDomain: "codenixhindi.firebaseapp.com",
+            projectId: "codenixhindi",
+            storageBucket: "codenixhindi.firebasestorage.app",
+            messagingSenderId: "100141921442",
+            appId: "1:100141921442:web:6cba5da64c71505e6153fb",
+            measurementId: "G-GL7RHHHZVC"
         };
 
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydtK9KUc2ytUW42MPoMFvlU87zjVP0SF1C-8O-GWRKJvQ_dIP-aCE3ht4A8IrH56berQ/exec";
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        // Tab Switching Logic
-        function switchTab(tab) {
+        // Aapki Security Key (Admin Email)
+        const ADMIN_EMAIL = "raju.admin@codenixhindi.com";
+
+        // --- UI FUNCTIONS (Attached to window for HTML access) ---
+        window.switchTab = function(tab) {
             const btns = document.querySelectorAll('.tab-btn');
             document.querySelectorAll('form').forEach(f => f.classList.remove('active'));
             btns.forEach(btn => btn.classList.remove('active'));
-            
             const bottomText = document.getElementById('bottomText');
 
             if(tab === 'login') {
@@ -347,10 +351,9 @@
                 document.getElementById('signupForm').classList.add('active');
                 bottomText.innerHTML = `Already have an account? <span onclick="switchTab('login')">Login</span>`;
             }
-        }
+        };
 
-        // Password Visibility Toggle
-        function togglePassword(inputId, icon) {
+        window.togglePassword = function(inputId, icon) {
             const input = document.getElementById(inputId);
             if(input.type === 'password') {
                 input.type = 'text';
@@ -361,29 +364,22 @@
                 icon.classList.remove('fa-eye');
                 icon.classList.add('fa-eye-slash');
             }
-        }
+        };
 
-        // Modern Toast Notification
-        function showToast(message, type) {
+        window.showToast = function(message, type) {
             const toastContainer = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            
-            let iconClass = 'fa-info-circle';
-            if(type === 'success') iconClass = 'fa-check-circle';
-            if(type === 'error') iconClass = 'fa-exclamation-circle';
-            if(type === 'warning') iconClass = 'fa-spinner fa-spin';
-
+            let iconClass = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
             toast.innerHTML = `<i class="fas ${iconClass}"></i> <span>${message}</span>`;
             toastContainer.appendChild(toast);
-
             setTimeout(() => {
                 toast.style.animation = 'slideOutRight 0.4s ease forwards';
                 setTimeout(() => toast.remove(), 400);
             }, 3500);
-        }
+        };
 
-        function setLoading(btnId, isLoading) {
+        window.setLoading = function(btnId, isLoading) {
             const btn = document.getElementById(btnId);
             if(isLoading) {
                 btn.disabled = true;
@@ -392,87 +388,95 @@
                 btn.disabled = false;
                 btn.classList.remove('loading');
             }
-        }
+        };
 
-        // Firebase Setup Placeholder Alert
-        function handleSocialLogin(provider) {
-            showToast(`${provider} login UI is ready. Firebase integration will be added here next!`, "warning");
-        }
+        // --- CHECK LOGIN STATUS ON PAGE LOAD ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                if (user.email === ADMIN_EMAIL) {
+                    window.location.href = "admin.html";
+                } else {
+                    window.location.href = "codenixhindi.html";
+                }
+            }
+        });
 
-        // --- SIGN UP LOGIC (Data logic unchanged) ---
+        // --- FIREBASE EMAIL SIGN UP ---
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            showToast("Creating account... Please wait.", "warning");
-            setLoading('signupBtn', true);
+            window.showToast("Creating account...", "warning");
+            window.setLoading('signupBtn', true);
 
-            const data = {
-                Name: document.getElementById('regName').value,
-                Email: document.getElementById('regEmail').value,
-                Password: document.getElementById('regPassword').value,
-                Role: "Student" 
-            };
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
 
             try {
-                const response = await fetch(SCRIPT_URL + "?sheet=Users", {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
                 
-                const result = await response.text();
-                if(result === "Success") {
-                    showToast("Account Created! Redirecting...", "success");
-                    
-                    localStorage.setItem("codenix_user_name", data.Name);
-                    localStorage.setItem("codenix_user_role", data.Role);
-                    
-                    setTimeout(() => { window.location.href = "codenixhindi.html"; }, 1500);
-                } else {
-                    showToast("Something went wrong.", "error");
-                    setLoading('signupBtn', false);
-                }
+                // Save user to Firestore Database
+                await setDoc(doc(db, "Users", user.uid), {
+                    name: name,
+                    email: email,
+                    role: "Student",
+                    createdAt: new Date().toISOString()
+                });
+
+                window.showToast("Account Created! Redirecting...", "success");
+                // onAuthStateChanged will handle redirection
             } catch (error) {
-                showToast("Internet Connection Error.", "error");
-                setLoading('signupBtn', false);
+                window.showToast(error.message, "error");
+                window.setLoading('signupBtn', false);
             }
         });
 
-        // --- LOGIN LOGIC (Data logic unchanged) ---
+        // --- FIREBASE EMAIL LOGIN ---
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            showToast("Verifying details...", "warning");
-            setLoading('loginBtn', true);
+            window.showToast("Verifying details...", "warning");
+            window.setLoading('loginBtn', true);
 
             const email = document.getElementById('logEmail').value;
-            const pass = document.getElementById('logPassword').value;
+            const password = document.getElementById('logPassword').value;
 
             try {
-                const response = await fetch(SCRIPT_URL + "?sheet=Users");
-                const users = await response.json();
-                
-                const validUser = users.find(u => u.Email === email && u.Password === pass);
-
-                if(validUser) {
-                    showToast("Login Successful! Redirecting...", "success");
-                    
-                    localStorage.setItem("codenix_user_name", validUser.Name);
-                    localStorage.setItem("codenix_user_role", validUser.Role);
-                    
-                    setTimeout(() => {
-                        if(validUser.Role === "Admin") {
-                            window.location.href = "admin.html";
-                        } else {
-                            window.location.href = "codenixhindi.html";
-                        }
-                    }, 1500);
-                } else {
-                    showToast("Invalid Email or Password.", "error");
-                    setLoading('loginBtn', false);
-                }
+                await signInWithEmailAndPassword(auth, email, password);
+                window.showToast("Login Successful! Redirecting...", "success");
+                // onAuthStateChanged will handle redirection
             } catch (error) {
-                showToast("Internet Error. Try again.", "error");
-                setLoading('loginBtn', false);
+                window.showToast("Invalid Email or Password.", "error");
+                window.setLoading('loginBtn', false);
             }
         });
+
+        // --- FIREBASE SOCIAL LOGIN (GOOGLE & FACEBOOK) ---
+        window.handleSocialLogin = async (providerName) => {
+            let provider;
+            if (providerName === 'Google') {
+                provider = new GoogleAuthProvider();
+            } else if (providerName === 'Facebook') {
+                provider = new FacebookAuthProvider();
+            }
+
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+
+                // Save user to Firestore if they don't exist
+                await setDoc(doc(db, "Users", user.uid), {
+                    name: user.displayName || "Social User",
+                    email: user.email,
+                    role: user.email === ADMIN_EMAIL ? "Admin" : "Student",
+                    createdAt: new Date().toISOString()
+                }, { merge: true });
+
+                window.showToast(`${providerName} Login Successful!`, "success");
+                // onAuthStateChanged will handle redirection
+            } catch (error) {
+                window.showToast(`Error: ${error.message}`, "error");
+            }
+        };
     </script>
 </body>
 </html>
