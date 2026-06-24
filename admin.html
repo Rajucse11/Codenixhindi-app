@@ -3,280 +3,773 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Admin Panel - Codenix</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>Admin Dashboard - CodeNix Hindi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --bg: #050b14; --card: #0f172a; --border: #1e293b; --text: #f8fafc; --muted: #94a3b8; --blue: #2563eb; --yellow: #facc15; --red: #ef4444; --green: #10b981; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; color: var(--text); }
-        body { background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
-        
-        /* Mobile Header */
-        .mobile-header { display: none; background: var(--card); padding: 15px 20px; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); width: 100%; z-index: 998; }
-        .mobile-header h2 { color: var(--yellow); font-size: 18px; margin: 0; }
-        .mobile-header button { background: transparent; border: none; color: white; font-size: 24px; cursor: pointer; }
+        /* --- CSS Variables (Dark Theme Default) --- */
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #facc15;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        /* --- Light Theme Variables --- */
+        body.light-theme {
+            --bg-dark: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: rgba(0, 0, 0, 0.1);
+        }
+        body.light-theme .form-group input, 
+        body.light-theme .form-group select, 
+        body.light-theme .form-group textarea,
+        body.light-theme .chat-input input {
+            background: var(--bg-dark);
+            color: var(--text-main);
+        }
+        body.light-theme .video-preview { background: #e2e8f0; border-color: var(--border); }
+        body.light-theme #cameraOffIcon { color: var(--text-muted) !important; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; color: var(--text-main); }
+        body { background: var(--bg-dark); display: flex; height: 100vh; overflow: hidden; transition: background 0.3s, color 0.3s; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+        /* Sidebar Overlay for Mobile */
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index: 999; }
+        .sidebar-overlay.active { display: block; }
 
         /* Sidebar */
-        .sidebar { width: 260px; background: var(--card); padding: 20px; border-right: 1px solid var(--border); transition: 0.3s; display: flex; flex-direction: column; z-index: 1000; overflow-y: auto; }
-        .sidebar-logo { color: var(--yellow); font-size: 20px; text-align: center; margin-bottom: 30px; font-weight: 600; }
-        .menu-btn { width: 100%; padding: 12px 15px; margin-bottom: 8px; background: transparent; border: none; text-align: left; cursor: pointer; font-size: 15px; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; gap: 10px; color: var(--muted); }
-        .menu-btn:hover, .menu-btn.active { background: var(--blue); color: white; }
-        .close-sidebar { display: none; background: transparent; border: none; color: white; font-size: 24px; position: absolute; top: 15px; right: 15px; cursor: pointer; }
+        .sidebar { width: 260px; background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; z-index: 1000; transition: left 0.3s ease; }
+        .logo { font-size: 20px; font-weight: 700; padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+        .logo-text { display: flex; align-items: center; gap: 10px; }
+        .logo-text i { color: var(--primary); font-size: 24px; }
+        .logo-text span { background: var(--danger); font-size: 10px; padding: 2px 6px; border-radius: 4px; color: white; }
+        .close-sidebar { display: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
 
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; }
+        .nav-links { flex: 1; overflow-y: auto; padding: 10px; }
+        .nav-item { padding: 12px 15px; display: flex; align-items: center; gap: 15px; color: var(--text-muted); cursor: pointer; border-radius: 8px; transition: 0.3s; margin-bottom: 5px; font-size: 14px; font-weight: 500; }
+        .nav-item:hover, .nav-item.active { background: var(--primary); color: white; }
+        .nav-item i { width: 20px; text-align: center; font-size: 16px; }
 
-        /* Content */
-        .content { flex: 1; padding: 25px; overflow-y: auto; height: 100vh; }
-        .section { display: none; animation: fadeIn 0.4s ease; }
-        .section.active { display: block; }
+        /* Main Content Area */
+        .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; width: 100%; }
+        
+        .topbar { background: var(--bg-card); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .topbar-left { display: flex; align-items: center; gap: 15px; }
+        .menu-toggle { display: none; font-size: 20px; cursor: pointer; color: var(--text-main); }
+        .topbar h2 { font-size: 18px; font-weight: 600; }
+        
+        .topbar-actions { display: flex; align-items: center; gap: 20px; }
+        .icon-btn { font-size: 20px; color: var(--text-muted); cursor: pointer; transition: 0.3s; }
+        .icon-btn:hover { color: var(--primary); }
+        
+        .admin-profile { display: flex; align-items: center; gap: 10px; }
+        .admin-profile img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--primary); }
+
+        .content-area { flex: 1; padding: 30px; overflow-y: auto; }
+        
+        /* Tab Panels */
+        .tab-panel { display: none; animation: fadeIn 0.4s ease; }
+        .tab-panel.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; }
+        .stat-icon { width: 50px; height: 50px; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 20px; }
+        .stat-info h3 { font-size: 22px; font-weight: 700; }
+        .stat-info p { font-size: 12px; color: var(--text-muted); }
+
+        /* Forms & Cards */
+        .admin-card { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); padding: 25px; margin-bottom: 30px; }
+        .admin-card h3 { font-size: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         
-        .section-header { margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-        .section-header h3 { font-size: 22px; font-weight: 600; }
-        
-        .form-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); max-width: 600px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; font-size: 13px; color: var(--muted); }
-        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: white; outline: none; font-size: 14px; }
-        button.submit-btn { width: 100%; padding: 12px; background: var(--blue); border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; font-size: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px; color: white; outline: none; font-size: 13px; transition: 0.3s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+        .form-group input[type="file"] { padding: 9px 15px; }
+
+        .btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 13px; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+        .btn-success { background: var(--success); color: white; }
+
+        /* User Table */
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border); min-width: 120px; }
+        th { color: var(--text-muted); font-weight: 500; }
+        .action-btns i { cursor: pointer; margin-right: 10px; font-size: 15px; transition: 0.3s; }
+        .action-btns .fa-edit { color: var(--primary); }
+        .action-btns .fa-ban { color: var(--accent); }
+        .action-btns .fa-trash { color: var(--danger); }
+
+        /* LIVE STUDIO UI */
+        .studio-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .video-preview { background: #000; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; position: relative; display: flex; justify-content: center; align-items: center; border: 2px solid var(--border); }
+        .video-preview video { width: 100%; height: 100%; object-fit: cover; }
+        .live-controls { display: flex; flex-direction: column; gap: 15px; padding: 15px; background: var(--bg-card); border-radius: 12px; margin-top: 15px; }
+        .live-btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
         
-        .table-wrapper { width: 100%; overflow-x: auto; background: var(--card); border-radius: 12px; border: 1px solid var(--border); margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-        th { background: #111827; color: var(--muted); }
-        
-        #statusToast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); padding: 12px 25px; border-radius: 30px; font-size: 14px; transition: 0.4s; z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        #statusToast.show { bottom: 30px; }
+        .chat-control { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; min-height: 300px; }
+        .chat-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #475569; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Toast System */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: white; border-left: 4px solid var(--success); padding: 15px 20px; border-radius: 8px; color: #1e293b; font-size: 13px; font-weight: 500; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 12px; animation: slideInRight 0.4s ease forwards; }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        /* Notification List Styling */
+        .notif-item { background: var(--bg-card); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 900px) {
+            .studio-grid { grid-template-columns: 1fr; }
+        }
 
         @media (max-width: 768px) {
-            body { flex-direction: column; }
-            .mobile-header { display: flex; }
-            .sidebar { position: fixed; left: -260px; top: 0; height: 100vh; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
+            .sidebar { position: fixed; left: -260px; height: 100vh; }
             .sidebar.active { left: 0; }
+            .menu-toggle { display: block; }
             .close-sidebar { display: block; }
-            .content { padding: 15px; padding-bottom: 80px; }
+            
+            .topbar { padding: 15px 20px; }
+            .content-area { padding: 20px; }
+            .form-grid { grid-template-columns: 1fr; }
+            
+            /* Hide Text of Profile on Mobile */
+            .admin-profile-text { display: none; }
+            .live-btn-group .btn { flex: 1; min-width: 120px; }
         }
     </style>
 </head>
 <body>
 
-    <script>
-        // --- SECURITY GUARD ---
-        window.onload = () => {
-            const role = localStorage.getItem("codenix_user_role");
-            if (role !== "Admin") {
-                alert("⚠️ Access Denied! Sirf Admin hi yahan aa sakte hain.");
-                window.location.href = "codenixhindi.html"; // Aapki file ka naam
+    <div id="toast-container"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <div class="logo-text"><i class="fas fa-user-shield"></i> CodeNix <span>ADMIN</span></div>
+            <i class="fas fa-times close-sidebar" onclick="toggleSidebar()"></i>
+        </div>
+        <div class="nav-links">
+            <div class="nav-item active" onclick="switchTab('dashboard', this); toggleSidebarMobile()"><i class="fas fa-chart-pie"></i> Dashboard</div>
+            <div class="nav-item" onclick="switchTab('manageContent', this); toggleSidebarMobile()"><i class="fas fa-upload"></i> Upload Content</div>
+            <div class="nav-item" onclick="switchTab('liveStudio', this); toggleSidebarMobile()"><i class="fas fa-broadcast-tower" style="color:var(--danger);"></i> Live Studio</div>
+            <div class="nav-item" onclick="switchTab('manageUsers', this); toggleSidebarMobile()"><i class="fas fa-users"></i> Manage Students</div>
+            <div class="nav-item" onclick="switchTab('sendNotif', this); toggleSidebarMobile()"><i class="fas fa-paper-plane" style="color:var(--success);"></i> Notifications</div>
+            <div class="nav-item" onclick="switchTab('banners', this); toggleSidebarMobile()"><i class="fas fa-images"></i> Banners & Ads</div>
+        </div>
+        <div style="padding: 15px; border-top: 1px solid var(--border);">
+            <div class="nav-item" onclick="logoutAdmin()" style="color: var(--danger);"><i class="fas fa-sign-out-alt"></i> Logout</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <i class="fas fa-bars menu-toggle" onclick="toggleSidebar()"></i>
+                <h2 id="topbarTitle">Dashboard Overview</h2>
+            </div>
+            
+            <div class="topbar-actions">
+                <i class="fas fa-expand icon-btn" id="fullScreenBtn" onclick="toggleFullScreen()" title="Full Screen"></i>
+                <i class="fas fa-sun icon-btn" id="themeBtn" onclick="toggleTheme()" title="Change Theme"></i>
+                
+                <div class="admin-profile">
+                    <div class="admin-profile-text" style="text-align: right;">
+                        <h4 style="font-size: 13px;">Admin</h4>
+                        <p style="font-size: 11px; color: var(--success);">Online</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=facc15&color=000" alt="Admin">
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            
+            <div id="dashboard" class="tab-panel active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.2); color: var(--primary);"><i class="fas fa-users"></i></div>
+                        <div class="stat-info"><h3 id="dashUserCount">0</h3><p>Total Students</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--success);"><i class="fas fa-book-open"></i></div>
+                        <div class="stat-info"><h3 id="dashCourseCount">0</h3><p>Active Courses</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(239, 68, 68, 0.2); color: var(--danger);"><i class="fas fa-play-circle"></i></div>
+                        <div class="stat-info"><h3 id="dashVideoCount">0</h3><p>Uploaded Videos</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(250, 204, 21, 0.2); color: var(--accent);"><i class="fas fa-file-pdf"></i></div>
+                        <div class="stat-info"><h3 id="dashNoteCount">0</h3><p>PDF Notes</p></div>
+                    </div>
+                </div>
+                
+                <div class="admin-card">
+                    <h3><i class="fas fa-bell"></i> Quick Actions</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="switchTab('manageContent')"><i class="fas fa-plus"></i> Add New Course</button>
+                        <button class="btn btn-danger" onclick="switchTab('liveStudio')"><i class="fas fa-video"></i> Start Live Class</button>
+                        <button class="btn btn-success" onclick="switchTab('sendNotif')"><i class="fas fa-paper-plane"></i> Send Alert</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="manageContent" class="tab-panel">
+                <div class="admin-card">
+                    <h3><i class="fas fa-folder-plus"></i> Create New Course Category</h3>
+                    <div class="form-grid">
+                        <div class="form-group" style="display:flex; gap:10px; align-items:flex-end;">
+                            <div style="flex:1;">
+                                <label>Course Name</label>
+                                <input type="text" id="newCourseInput" placeholder="e.g. React Native Full Course">
+                            </div>
+                            <button class="btn btn-success" onclick="addNewCourseCategory()"><i class="fas fa-plus"></i> Create</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-card">
+                    <h3><i class="fas fa-film"></i> Upload Video to Course</h3>
+                    <form onsubmit="handleVideoUpload(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Title</label>
+                                <input type="text" id="videoTitleInput" placeholder="e.g. HTML Part 1 - Basics" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Select Course</label>
+                                <select id="globalCourseSelect" required>
+                                    <option value="">-- Select a Course --</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Video Source Link (YouTube / Drive / MP4)</label>
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <input type="url" id="videoLinkInput" placeholder="https://youtube.com/..." style="flex: 2; min-width: 200px;" required>
+                                </div>
+                            </div>
+                            <div class="form-group" style="display: flex; align-items: flex-end;">
+                                <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fas fa-upload"></i> Publish Video</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="admin-card">
+                    <h3><i class="fas fa-file-pdf"></i> Upload PDF Note</h3>
+                    <form onsubmit="handleNoteUpload(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Note Title</label>
+                                <input type="text" id="noteTitleInput" placeholder="e.g. CSS Flexbox Cheatsheet" required>
+                            </div>
+                            <div class="form-group">
+                                <label>PDF File Link (Google Drive / Direct Link)</label>
+                                <input type="url" id="noteLinkInput" placeholder="https://drive.google.com/..." required>
+                            </div>
+                            <div class="form-group full-width">
+                                <button type="submit" class="btn btn-success"><i class="fas fa-cloud-upload-alt"></i> Publish Note</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="liveStudio" class="tab-panel">
+                <div class="studio-grid">
+                    <div>
+                        <div class="video-preview">
+                            <i class="fas fa-video-slash" id="cameraOffIcon" style="font-size: 50px; color: #475569;"></i>
+                            <video id="livePreview" autoplay muted style="display: none;"></video>
+                            <div style="position: absolute; top: 10px; left: 10px; background: var(--danger); padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; color: white;" id="liveBadge">LIVE REC</div>
+                        </div>
+                        
+                        <div class="live-controls">
+                            <div class="form-group" style="margin-bottom: 5px;">
+                                <label><i class="fas fa-folder-open"></i> Map Live Session to Course</label>
+                                <select id="liveCourseSelect" style="background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border); padding: 10px; border-radius: 8px; width: 100%;">
+                                    <option value="">-- Select a Course --</option>
+                                </select>
+                            </div>
+                            
+                            <div class="live-btn-group">
+                                <button class="btn" style="background: #3b82f6; color: white;" onclick="startCamera()"><i class="fas fa-camera"></i> Camera</button>
+                                <button class="btn" style="background: #10b981; color: white;" onclick="shareScreen()"><i class="fas fa-desktop"></i> Screen</button>
+                                <button class="btn btn-danger" style="flex: 2;" id="goLiveBtn" onclick="toggleLiveStream()"><i class="fas fa-broadcast-tower"></i> Go Live</button>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-card" style="margin-top: 20px; padding: 15px;">
+                            <h3 style="font-size: 14px; margin-bottom: 10px;">Schedule Future Class</h3>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <input type="datetime-local" class="form-group" style="flex: 1; padding: 8px; border-radius: 5px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-main); min-width: 200px;">
+                                <button class="btn btn-primary" onclick="showToast('Class Scheduled! App users will see the thumbnail now.')">Set Schedule</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-control">
+                        <div class="chat-header">
+                            <span style="font-size: 14px; font-weight: 600;"><i class="fas fa-comments"></i> App Live Chat</span>
+                            <div style="display: flex; align-items: center; gap: 10px; font-size: 12px;">
+                                Public Chat
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleChatStatus(this)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div style="flex: 1; padding: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-muted); font-size: 12px;">
+                            <i class="fas fa-inbox" style="font-size: 30px; margin-bottom: 10px;"></i>
+                            <p>No messages yet.</p>
+                            <p>Start streaming to receive chats from app.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="manageUsers" class="tab-panel">
+                <div class="admin-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="margin: 0; border: none;"><i class="fas fa-users"></i> Registered Students</h3>
+                        <div class="form-group" style="margin: 0;">
+                            <input type="text" placeholder="Search student name, email..." style="width: 100%; min-width: 200px; padding: 8px 15px;">
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>User ID</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentTableBody">
+                                <tr><td colspan="3" style="text-align: center;">Loading students...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sendNotif" class="tab-panel">
+                <div class="admin-card">
+                    <h3><i class="fas fa-bell"></i> Send Push Notification</h3>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">Send instant alerts to all registered users on the learning app.</p>
+                    
+                    <form onsubmit="sendPushNotification(event)">
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label>Notification Title</label>
+                                <input type="text" id="notifTitle" placeholder="e.g. New HTML Video Uploaded!" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Message Description</label>
+                                <textarea id="notifMsg" rows="3" placeholder="Type your full message here..." required></textarea>
+                            </div>
+                            <div class="form-group" style="display: flex; align-items: flex-end;">
+                                <button type="submit" class="btn btn-success" style="width: 100%;"><i class="fas fa-paper-plane"></i> Broadcast Notification</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <h4 style="font-size: 14px; margin-bottom: 15px;">Recent Notifications Sent</h4>
+                <div id="notifHistoryList">
+                    </div>
+            </div>
+
+            <div id="banners" class="tab-panel">
+                <div class="admin-card">
+                    <h3><i class="fas fa-image"></i> Upload App Banners</h3>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Upload images for the home page slider. (Size: 800x400px recommended)</p>
+                    
+                    <form onsubmit="handleBannerUpload(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Banner Image URL (Direct Link)</label>
+                                <input type="url" id="bannerLinkInput" placeholder="https://..." required>
+                            </div>
+                            <div class="form-group full-width">
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle"></i> Add to Slider</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <h4 style="font-size: 14px; margin-bottom: 15px;">Active Banners in App</h4>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;" id="activeBannersList">
+                    </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // Firebase Configuration (from User)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9dKvLboAoBF8q8rGcZ_DXvm9cYbzPlhM",
+            authDomain: "codenixhindi.firebaseapp.com",
+            projectId: "codenixhindi",
+            storageBucket: "codenixhindi.firebasestorage.app",
+            messagingSenderId: "100141921442",
+            appId: "1:100141921442:web:6cba5da64c71505e6153fb",
+            measurementId: "G-GL7RHHHZVC"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- GLOBAL UI FUNCTIONS ---
+        window.toggleSidebar = () => {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        };
+        window.toggleSidebarMobile = () => { if(window.innerWidth <= 768) window.toggleSidebar(); };
+        
+        window.switchTab = (tabId, element = null) => {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if(element) {
+                document.querySelectorAll('.sidebar .nav-item').forEach(i => i.classList.remove('active'));
+                element.classList.add('active');
+                document.getElementById('topbarTitle').innerText = element.innerText;
             }
         };
-    </script>
 
-    <div class="mobile-header">
-        <h2><i class="fas fa-crown"></i> Admin Panel</h2>
-        <button onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-    </div>
-    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+        window.toggleTheme = () => {
+            document.body.classList.toggle('light-theme');
+            const themeBtn = document.getElementById('themeBtn');
+            if(document.body.classList.contains('light-theme')) {
+                themeBtn.classList.remove('fa-sun'); themeBtn.classList.add('fa-moon');
+            } else {
+                themeBtn.classList.remove('fa-moon'); themeBtn.classList.add('fa-sun');
+            }
+        };
 
-    <div class="sidebar" id="sidebar">
-        <button class="close-sidebar" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
-        <div class="sidebar-logo"><i class="fas fa-crown"></i> App Malik</div>
-        
-        <button class="menu-btn active" onclick="openTab('addVideo')"><i class="fas fa-video"></i> Videos / Live</button>
-        <button class="menu-btn" onclick="openTab('addNote')"><i class="fas fa-file-pdf"></i> PDF Notes</button>
-        <button class="menu-btn" onclick="openTab('addBanner')"><i class="fas fa-image"></i> App Banners</button>
-        <button class="menu-btn" onclick="openTab('addQuiz')"><i class="fas fa-question-circle"></i> Add Quiz</button>
-        <button class="menu-btn" onclick="openTab('manageUsers'); loadUsers()"><i class="fas fa-users"></i> Manage Users</button>
-    </div>
+        window.toggleFullScreen = () => {
+            const icon = document.getElementById('fullScreenBtn');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                icon.classList.remove('fa-expand'); icon.classList.add('fa-compress');
+            } else {
+                document.exitFullscreen(); 
+                icon.classList.remove('fa-compress'); icon.classList.add('fa-expand');
+            }
+        };
 
-    <div class="content">
-        
-        <div id="addVideo" class="section active">
-            <div class="section-header"><h3><i class="fas fa-video"></i> Upload Video or Live Class</h3></div>
-            <div class="form-card">
-                <form onsubmit="submitForm(event, 'Videos', 'videoForm')">
-                    <div class="form-group"><label>Video Title</label><input type="text" id="vid_VideoTitle" placeholder="e.g. HTML Part 1" required></div>
-                    <div class="form-group"><label>YouTube Link</label><input type="url" id="vid_YouTubeLink" placeholder="https://youtube.com/..." required></div>
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select id="vid_Category">
-                            <option value="HTML">HTML Course</option>
-                            <option value="CSS">CSS Course</option>
-                            <option value="JavaScript">JS Course</option>
-                            <option value="LIVE">🔴 LIVE CLASS</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="submit-btn"><i class="fas fa-upload"></i> Publish Video</button>
-                </form>
-            </div>
-        </div>
+        window.showToast = (message) => {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fas fa-check-circle" style="color: var(--success); font-size: 18px;"></i> <span>${message}</span>`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideInRight 0.4s ease reverse forwards';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        };
 
-        <div id="addNote" class="section">
-            <div class="section-header"><h3><i class="fas fa-file-pdf"></i> Upload PDF Notes</h3></div>
-            <div class="form-card">
-                <form onsubmit="submitForm(event, 'Notes', 'noteForm')">
-                    <div class="form-group"><label>Note Title</label><input type="text" id="note_Title" placeholder="e.g. CSS Chapter 1 Notes" required></div>
-                    <div class="form-group"><label>Google Drive PDF Link</label><input type="url" id="note_DriveLink" placeholder="https://drive.google.com/..." required></div>
-                    <button type="submit" class="submit-btn" style="background: var(--green);"><i class="fas fa-file-upload"></i> Publish Notes</button>
-                </form>
-            </div>
-        </div>
+        window.logoutAdmin = () => {
+            if(confirm("Are you sure you want to logout?")) window.location.href = "index.html"; 
+        };
 
-        <div id="addBanner" class="section">
-            <div class="section-header"><h3><i class="fas fa-image"></i> Add App Banner</h3></div>
-            <div class="form-card">
-                <form onsubmit="submitForm(event, 'Banners', 'bannerForm')">
-                    <div class="form-group"><label>Image URL</label><input type="url" id="ban_ImageURL" placeholder="Paste Image Link Here" required></div>
-                    <div class="form-group"><label>Action Link (Optional)</label><input type="url" id="ban_ActionLink" placeholder="Link to open on click"></div>
-                    <button type="submit" class="submit-btn" style="background: #f59e0b; color: #000;"><i class="fas fa-bullhorn"></i> Set Banner</button>
-                </form>
-            </div>
-        </div>
+        // --- FIREBASE LOGIC: LOAD COURSES ---
+        async function loadCourses() {
+            const querySnapshot = await getDocs(collection(db, "Courses"));
+            const globalSelect = document.getElementById('globalCourseSelect');
+            const liveSelect = document.getElementById('liveCourseSelect');
+            
+            let optionsHTML = '<option value="">-- Select a Course --</option>';
+            let count = 0;
+            querySnapshot.forEach((doc) => {
+                optionsHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
+                count++;
+            });
 
-        <div id="addQuiz" class="section">
-            <div class="section-header"><h3><i class="fas fa-question-circle"></i> Add New Quiz</h3></div>
-            <div class="form-card">
-                <form onsubmit="submitForm(event, 'Quiz', 'quizForm')">
-                    <div class="form-group"><label>Question</label><input type="text" id="quiz_Question" placeholder="e.g. HTML ka full form kya hai?" required></div>
-                    
-                    <div style="display:flex; gap:10px;">
-                        <div class="form-group" style="flex:1;"><label>Option A</label><input type="text" id="quiz_OptA" required></div>
-                        <div class="form-group" style="flex:1;"><label>Option B</label><input type="text" id="quiz_OptB" required></div>
-                    </div>
-                    
-                    <div style="display:flex; gap:10px;">
-                        <div class="form-group" style="flex:1;"><label>Option C</label><input type="text" id="quiz_OptC" required></div>
-                        <div class="form-group" style="flex:1;"><label>Option D</label><input type="text" id="quiz_OptD" required></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Correct Answer</label>
-                        <select id="quiz_Correct">
-                            <option value="A">Option A</option>
-                            <option value="B">Option B</option>
-                            <option value="C">Option C</option>
-                            <option value="D">Option D</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Category (Kiska Quiz hai?)</label>
-                        <select id="quiz_Category">
-                            <option value="HTML">HTML</option>
-                            <option value="CSS">CSS</option>
-                            <option value="JavaScript">JavaScript</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="submit-btn" style="background: #8b5cf6;"><i class="fas fa-plus"></i> Publish Quiz</button>
-                </form>
-            </div>
-        </div>
-
-        <div id="manageUsers" class="section">
-            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h3><i class="fas fa-users"></i> App Users</h3>
-                <button onclick="loadUsers()" style="background: var(--blue); border: none; padding: 8px 15px; border-radius: 6px; color: white; cursor: pointer;"><i class="fas fa-sync"></i> Refresh</button>
-            </div>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr><th>Name</th><th>Email</th><th>Role</th></tr>
-                    </thead>
-                    <tbody id="usersTableBody">
-                        <tr><td colspan="3" style="text-align: center;">Click refresh to load...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </div>
-
-    <div id="statusToast">✅ Success Message Here</div>
-
-    <script>
-        // AAPKA GOOGLE SCRIPT LINK YAHAN HAI
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydtK9KUc2ytUW42MPoMFvlU87zjVP0SF1C-8O-GWRKJvQ_dIP-aCE3ht4A8IrH56berQ/exec";
-
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        function toggleSidebar() {
-            sidebar.classList.toggle('active');
-            overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+            globalSelect.innerHTML = optionsHTML;
+            liveSelect.innerHTML = optionsHTML;
+            document.getElementById('dashCourseCount').innerText = count;
         }
 
-        function openTab(tabName) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-            event.currentTarget.classList.add('active');
-            if(window.innerWidth <= 768) toggleSidebar();
-        }
+        window.addNewCourseCategory = async () => {
+            const input = document.getElementById('newCourseInput');
+            const newCourse = input.value.trim();
+            if(!newCourse) { alert("Please enter a course name!"); return; }
+            
+            await addDoc(collection(db, "Courses"), { name: newCourse, createdAt: new Date() });
+            input.value = "";
+            showToast(`Course '${newCourse}' created in Database!`);
+            loadCourses();
+        };
 
-        function showToast(msg, color) {
-            const toast = document.getElementById('statusToast');
-            toast.innerText = msg;
-            toast.style.color = color;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3500);
-        }
-
-        // --- DATA BHEJNE WALA MAIN FUNCTION ---
-        async function submitForm(e, sheetName, formType) {
+        // --- FIREBASE LOGIC: UPLOADS ---
+        window.handleVideoUpload = async (e) => {
             e.preventDefault();
-            showToast("⏳ Uploading " + sheetName + "... Please wait.", "#facc15");
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+            btn.disabled = true;
 
-            let data = {};
-            if(formType === 'videoForm') {
-                data = { VideoTitle: document.getElementById('vid_VideoTitle').value, YouTubeLink: document.getElementById('vid_YouTubeLink').value, Category: document.getElementById('vid_Category').value };
-            } else if(formType === 'noteForm') {
-                data = { NoteTitle: document.getElementById('note_Title').value, PDFLink: document.getElementById('note_DriveLink').value };
-            } else if(formType === 'bannerForm') {
-                data = { ImageURL: document.getElementById('ban_ImageURL').value, ActionLink: document.getElementById('ban_ActionLink').value };
-            } else if(formType === 'quizForm') {
-                data = { 
-                    Question: document.getElementById('quiz_Question').value, 
-                    OptionA: document.getElementById('quiz_OptA').value,
-                    OptionB: document.getElementById('quiz_OptB').value,
-                    OptionC: document.getElementById('quiz_OptC').value,
-                    OptionD: document.getElementById('quiz_OptD').value,
-                    CorrectAnswer: document.getElementById('quiz_Correct').value,
-                    Category: document.getElementById('quiz_Category').value
-                };
-            }
+            const title = document.getElementById('videoTitleInput').value;
+            const course = document.getElementById('globalCourseSelect').value;
+            const link = document.getElementById('videoLinkInput').value;
 
             try {
-                const response = await fetch(SCRIPT_URL + "?sheet=" + sheetName, {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
-                const result = await response.text();
+                await addDoc(collection(db, "Videos"), { title, course, link, createdAt: new Date() });
+                showToast("Video Published to App successfully!");
+                e.target.reset();
+                updateDashboardStats();
+            } catch (err) {
+                showToast("Error publishing video!");
+            } finally {
+                btn.innerHTML = '<i class="fas fa-upload"></i> Publish Video';
+                btn.disabled = false;
+            }
+        };
+
+        window.handleNoteUpload = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+            btn.disabled = true;
+
+            const title = document.getElementById('noteTitleInput').value;
+            const link = document.getElementById('noteLinkInput').value;
+
+            try {
+                await addDoc(collection(db, "Notes"), { title, link, createdAt: new Date() });
+                showToast("PDF Note Published successfully!");
+                e.target.reset();
+                updateDashboardStats();
+            } catch (err) {
+                showToast("Error publishing note!");
+            } finally {
+                btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Publish Note';
+                btn.disabled = false;
+            }
+        };
+
+        window.handleBannerUpload = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            btn.disabled = true;
+
+            const imageLink = document.getElementById('bannerLinkInput').value;
+
+            try {
+                await addDoc(collection(db, "Banners"), { imageLink, createdAt: new Date() });
+                showToast("Banner added to App Slider!");
+                e.target.reset();
+                loadBanners();
+            } catch (err) {
+                showToast("Error adding banner!");
+            } finally {
+                btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add to Slider';
+                btn.disabled = false;
+            }
+        };
+
+        // --- FIREBASE LOGIC: NOTIFICATIONS ---
+        window.sendPushNotification = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            btn.disabled = true;
+
+            const title = document.getElementById('notifTitle').value;
+            const msg = document.getElementById('notifMsg').value;
+
+            try {
+                await addDoc(collection(db, "Notifications"), { title, msg, timestamp: new Date() });
+                showToast("Push Notification broadcasted to all users!");
+                e.target.reset();
+                loadNotifications();
+            } catch (err) {
+                showToast("Error sending notification!");
+            } finally {
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Broadcast Notification';
+                btn.disabled = false;
+            }
+        };
+
+        // --- FETCH & DISPLAY DATA ---
+        async function loadNotifications() {
+            const list = document.getElementById('notifHistoryList');
+            list.innerHTML = "";
+            const querySnapshot = await getDocs(collection(db, "Notifications"));
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                list.innerHTML += `
+                    <div class="notif-item">
+                        <div>
+                            <h4 style="font-size: 14px;">${data.title}</h4>
+                            <p style="font-size: 12px; color: var(--text-muted);">${data.msg}</p>
+                        </div>
+                        <span style="font-size: 11px; color: var(--success);"><i class="fas fa-check-double"></i></span>
+                    </div>
+                `;
+            });
+        }
+
+        async function loadBanners() {
+            const list = document.getElementById('activeBannersList');
+            list.innerHTML = "";
+            const querySnapshot = await getDocs(collection(db, "Banners"));
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                list.innerHTML += `
+                    <div style="width: 250px; height: 120px; background: url('${data.imageLink}') center/cover; border-radius: 8px; position: relative;">
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); border-radius: 8px;"></div>
+                        <i class="fas fa-trash" style="position: absolute; top: 10px; right: 10px; color: var(--danger); cursor: pointer;" onclick="deleteDocItem('Banners', '${docSnap.id}')"></i>
+                    </div>
+                `;
+            });
+        }
+
+        async function loadStudents() {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = "";
+            const querySnapshot = await getDocs(collection(db, "Users"));
+            let count = 0;
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                count++;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${data.email || 'N/A'}</td>
+                        <td style="font-family: monospace; font-size: 11px; color: var(--text-muted);">${docSnap.id}</td>
+                        <td class="action-btns">
+                            <i class="fas fa-trash" title="Delete User" onclick="deleteDocItem('Users', '${docSnap.id}')"></i>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById('dashUserCount').innerText = count;
+            if(count === 0) tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No students registered yet.</td></tr>`;
+        }
+
+        async function updateDashboardStats() {
+            const vidSnap = await getDocs(collection(db, "Videos"));
+            document.getElementById('dashVideoCount').innerText = vidSnap.size;
+            
+            const noteSnap = await getDocs(collection(db, "Notes"));
+            document.getElementById('dashNoteCount').innerText = noteSnap.size;
+        }
+
+        window.deleteDocItem = async (collectionName, docId) => {
+            if(confirm(`Are you sure you want to delete this from ${collectionName}?`)) {
+                await deleteDoc(doc(db, collectionName, docId));
+                showToast("Item deleted successfully.");
+                if(collectionName === 'Banners') loadBanners();
+                if(collectionName === 'Users') loadStudents();
+                updateDashboardStats();
+            }
+        };
+
+        // --- LIVE STUDIO LOGIC (WebRTC Mock) ---
+        let stream = null;
+        const videoElement = document.getElementById('livePreview');
+        const cameraIcon = document.getElementById('cameraOffIcon');
+        let isLive = false;
+
+        window.startCamera = async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                videoElement.srcObject = stream;
+                videoElement.style.display = "block";
+                cameraIcon.style.display = "none";
+                showToast("Camera access granted.");
+            } catch (err) { alert("Camera access denied!"); }
+        };
+
+        window.shareScreen = async () => {
+            try {
+                stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                videoElement.srcObject = stream;
+                videoElement.style.display = "block";
+                cameraIcon.style.display = "none";
+                showToast("Screen sharing started.");
+            } catch (err) { }
+        };
+
+        window.toggleLiveStream = async () => {
+            const btn = document.getElementById('goLiveBtn');
+            const badge = document.getElementById('liveBadge');
+            const selectedCourse = document.getElementById('liveCourseSelect').value;
+
+            if(!isLive && !selectedCourse) { alert("Please select a Course first!"); return; }
+            if(!stream) { alert("Please start camera or screen first!"); return; }
+
+            if(!isLive) {
+                // Update Firebase to notify students
+                await addDoc(collection(db, "LiveStreams"), { course: selectedCourse, status: "live", startedAt: new Date() });
                 
-                if(result === "Success") {
-                    showToast("✅ " + sheetName + " uploaded to App!", "#10b981");
-                    e.target.reset(); // Form khali kar dega
-                } else {
-                    showToast("❌ Error uploading data.", "#ef4444");
+                btn.innerHTML = '<i class="fas fa-stop-circle"></i> End Live Stream';
+                btn.style.background = '#475569';
+                badge.style.display = "block";
+                isLive = true;
+                showToast(`LIVE for course: ${selectedCourse}`);
+            } else {
+                if(confirm("End the live stream?")) {
+                    btn.innerHTML = '<i class="fas fa-broadcast-tower"></i> Go Live';
+                    btn.style.background = 'var(--danger)';
+                    badge.style.display = "none";
+                    isLive = false;
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                    videoElement.style.display = "none";
+                    cameraIcon.style.display = "block";
+                    stream = null;
+                    
+                    showToast("Live stream ended.");
                 }
-            } catch (error) {
-                showToast("❌ Internet Error. Please try again.", "#ef4444");
             }
-        }
+        };
 
-        async function loadUsers() {
-            const tbody = document.getElementById('usersTableBody');
-            tbody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>⏳ Fetching users...</td></tr>";
-            try {
-                const response = await fetch(SCRIPT_URL + "?sheet=Users");
-                const users = await response.json();
-                tbody.innerHTML = "";
-                users.forEach(user => {
-                    if(!user.Name) return;
-                    tbody.innerHTML += `<tr><td>${user.Name}</td><td>${user.Email}</td><td><span style="color:var(--blue); font-weight:600;">${user.Role || 'Student'}</span></td></tr>`;
-                });
-            } catch (error) {
-                tbody.innerHTML = "<tr><td colspan='3' style='color:red;'>❌ Failed to load users.</td></tr>";
-            }
-        }
+        // Initialization
+        window.onload = () => {
+            loadCourses();
+            loadNotifications();
+            loadBanners();
+            loadStudents();
+            updateDashboardStats();
+        };
+
     </script>
 </body>
 </html>
