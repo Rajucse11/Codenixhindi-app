@@ -217,6 +217,11 @@
         .spa-page { display: none; animation: fadeIn 0.4s ease; }
         .spa-page.active-page { display: block; }
 
+        /* Toast System */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: white; border-left: 4px solid var(--primary-blue); padding: 15px 20px; border-radius: 8px; color: #1e293b; font-size: 13px; font-weight: 500; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 12px; animation: slideInRight 0.4s ease forwards; }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
         /* --- Responsive Magic --- */
         @media (max-width: 1024px) {
             .grid-row-2, .live-wrapper { grid-template-columns: 1fr; }
@@ -240,6 +245,7 @@
     </style>
 </head>
 <body>
+    <div id="toast-container"></div>
 
     <aside class="sidebar" id="sidebar">
         <div class="logo-area">
@@ -265,19 +271,19 @@
     <main class="main-wrapper">
         
         <header class="topbar">
-            <i class="fas fa-bars menu-toggle" id="menu-btn"></i>
+            <i class="fas fa-bars menu-toggle" id="menu-btn" onclick="toggleSidebar()"></i>
             
             <div class="search-container">
                 <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search courses, notes, videos...">
+                <input type="text" id="searchInput" placeholder="Search courses, notes, videos...">
             </div>
 
             <div class="top-actions">
                 <span id="greetingText" style="font-size: 13px; font-weight: 500; color: var(--text-muted); display: none;">Good Morning!</span>
-                <i class="fas fa-moon icon-btn" id="theme-btn" title="Toggle Theme"></i>
+                <i class="fas fa-moon icon-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle Theme"></i>
                 <div class="icon-btn">
                     <i class="fas fa-bell"></i>
-                    <span class="badge">3</span>
+                    <span class="badge" id="notifBadge">0</span>
                 </div>
                 <div class="user-profile">
                     <img id="userAvatar" src="https://ui-avatars.com/api/?name=Guest+User&background=2563eb&color=fff" alt="User">
@@ -359,9 +365,9 @@
                 <div class="live-player-box" id="livePlayerBox">
                     <div class="scheduled-banner">
                         <img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=1000&auto=format&fit=crop" alt="Live Thumbnail">
-                        <h3 id="liveClassTitle">Next Class: Full Stack Web Development</h3>
-                        <p id="liveClassTime"><i class="far fa-clock"></i> Today @ 5:00 PM</p>
-                        <button class="btn btn-primary" style="margin: 0 auto;" onclick="alert('Notification set! We will remind you.')"><i class="fas fa-bell"></i> Notify Me</button>
+                        <h3 id="liveClassTitle">Waiting for Admin to start...</h3>
+                        <p id="liveClassTime"><i class="far fa-clock"></i> Keep checking this space</p>
+                        <button class="btn btn-primary" style="margin: 0 auto;" onclick="showToast('Notification set! We will remind you.')"><i class="fas fa-bell"></i> Notify Me</button>
                     </div>
                 </div>
 
@@ -371,7 +377,7 @@
                         <span style="color: var(--success); font-size: 12px; font-weight: 500;" id="chatAccessStatus">Public</span>
                     </div>
                     <div class="chat-messages" id="liveChatBox">
-                        <div class="chat-msg"><span>Admin:</span> Welcome to the live class! Drop your questions here.</div>
+                        <div class="chat-msg"><span>Admin:</span> Welcome! System is ready for live chat.</div>
                     </div>
                     <div class="chat-input">
                         <input type="text" id="liveChatInput" placeholder="Say something...">
@@ -396,7 +402,7 @@
                 <h2 class="section-title"><i class="fas fa-play-circle" style="color:var(--primary-blue);"></i> All Videos</h2>
             </div>
             <div class="item-list-container" id="fullVideosList" style="max-height: none;">
-                <p style="color:var(--text-muted);">Loading Database...</p>
+                <p style="color:var(--text-muted);"><div class="loader"></div> Loading Database...</p>
             </div>
         </div>
 
@@ -405,7 +411,7 @@
                 <h2 class="section-title"><i class="fas fa-file-pdf" style="color:var(--danger);"></i> All PDF Notes</h2>
             </div>
             <div class="item-list-container" id="fullNotesList" style="max-height: none;">
-                <p style="color:var(--text-muted);">Loading Database...</p>
+                <p style="color:var(--text-muted);"><div class="loader"></div> Loading Database...</p>
             </div>
         </div>
 
@@ -499,253 +505,252 @@
         </div>
     </div>
 
-    <script>
-        // Aapka Main Google Script URL jahan se saara data aayega
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydtK9KUc2ytUW42MPoMFvlU87zjVP0SF1C-8O-GWRKJvQ_dIP-aCE3ht4A8IrH56berQ/exec";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // ==========================================
-        // 1. INITIALIZATION & GREETING
-        // ==========================================
-        window.onload = () => {
-            const userName = localStorage.getItem("codenix_user_name") || "Guest User";
-            const userRole = localStorage.getItem("codenix_user_role") || "Student";
-            const avatarUrl = `https://ui-avatars.com/api/?name=${userName.replace(' ', '+')}&background=2563eb&color=fff`;
-            
-            document.getElementById('displayUserName').innerText = userName;
-            document.getElementById('displayUserRole').innerText = userRole;
-            document.getElementById('userAvatar').src = avatarUrl;
-            
-            document.getElementById('drawerUserName').innerText = userName;
-            document.getElementById('drawerUserRole').innerText = userRole;
-            document.getElementById('drawerAvatarImg').src = avatarUrl;
-
-            const hour = new Date().getHours();
-            let greeting = "Good Evening!";
-            if (hour < 12) greeting = "Good Morning!";
-            else if (hour < 17) greeting = "Good Afternoon!";
-            const greetEl = document.getElementById('greetingText');
-            greetEl.innerText = greeting;
-            if(window.innerWidth > 768) greetEl.style.display = "block";
-
-            // Ye function ab Courses, Videos, Notes, Banners sab laayega
-            fetchAppData(); 
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9dKvLboAoBF8q8rGcZ_DXvm9cYbzPlhM",
+            authDomain: "codenixhindi.firebaseapp.com",
+            projectId: "codenixhindi",
+            storageBucket: "codenixhindi.firebasestorage.app",
+            messagingSenderId: "100141921442",
+            appId: "1:100141921442:web:6cba5da64c71505e6153fb",
+            measurementId: "G-GL7RHHHZVC"
         };
 
-        // ==========================================
-        // 2. SPA PAGE SWITCHING LOGIC
-        // ==========================================
-        function switchPage(pageId, element = null) {
-            document.querySelectorAll('.spa-page').forEach(page => page.classList.remove('active-page'));
-            const targetPage = document.getElementById(pageId);
-            if(targetPage) targetPage.classList.add('active-page');
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
+        // --- GLOBAL VARIABLES & FUNCTIONS FOR HTML ---
+        let globalUserName = "Student";
+        
+        window.showToast = (message) => {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fas fa-bell" style="color: var(--primary-blue); font-size: 18px;"></i> <span>${message}</span>`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideInRight 0.4s ease reverse forwards';
+                setTimeout(() => toast.remove(), 400);
+            }, 5000);
+        };
+
+        window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('active'); };
+        window.toggleRightMenu = () => { document.getElementById('rightDrawer').classList.toggle('active'); document.getElementById('drawerOverlay').classList.toggle('active'); };
+        window.toggleFullScreen = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); window.toggleRightMenu(); };
+        window.toggleTheme = () => { document.body.classList.toggle('light-theme'); const btn = document.getElementById('theme-btn'); btn.classList.toggle('fa-moon'); btn.classList.toggle('fa-sun'); };
+        
+        window.switchPage = (pageId, element = null) => {
+            document.querySelectorAll('.spa-page').forEach(page => page.classList.remove('active-page'));
+            if(document.getElementById(pageId)) document.getElementById(pageId).classList.add('active-page');
             document.querySelectorAll('.sidebar .nav-item').forEach(item => item.classList.remove('active'));
             if(element) element.classList.add('active');
-
             document.querySelectorAll('.bottom-btn').forEach(btn => {
                 btn.classList.remove('active');
                 if(btn.getAttribute('data-target') === pageId) btn.classList.add('active');
             });
-
-            if(pageId === 'downloadsPage') renderDownloads();
+            if(pageId === 'downloadsPage') window.renderDownloads();
             if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('active');
-        }
+        };
 
-        // ==========================================
-        // 3. UI TOGGLES & LOGOUT (To index.html)
-        // ==========================================
-        document.getElementById('menu-btn').addEventListener('click', () => { 
-            document.getElementById('sidebar').classList.toggle('active'); 
-        });
+        window.logout = () => {
+            signOut(auth).then(() => {
+                window.location.href = "login.html";
+            });
+        };
 
-        function toggleRightMenu() {
-            document.getElementById('rightDrawer').classList.toggle('active');
-            document.getElementById('drawerOverlay').classList.toggle('active');
-        }
+        // --- AUTHENTICATION CHECK ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                globalUserName = user.displayName || user.email.split('@')[0];
+                const avatarUrl = `https://ui-avatars.com/api/?name=${globalUserName.replace(' ', '+')}&background=2563eb&color=fff`;
+                
+                document.getElementById('displayUserName').innerText = globalUserName;
+                document.getElementById('drawerUserName').innerText = globalUserName;
+                document.getElementById('userAvatar').src = avatarUrl;
+                document.getElementById('drawerAvatarImg').src = avatarUrl;
 
-        function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => console.log(err));
+                // Load Firestore Data once Auth is successful
+                fetchFirebaseData();
+                listenForRealtimeAlerts();
             } else {
-                if (document.exitFullscreen) document.exitFullscreen(); 
+                // Not logged in -> Kick out
+                window.location.href = "login.html";
             }
-            toggleRightMenu();
-        }
-
-        const themeBtn = document.getElementById('theme-btn');
-        themeBtn.addEventListener('click', () => {
-            document.body.classList.toggle('light-theme');
-            themeBtn.classList.toggle('fa-moon');
-            themeBtn.classList.toggle('fa-sun');
         });
 
-        // Logout ab index.html par bhejega
-        function logout() {
-            localStorage.removeItem("codenix_user_name");
-            localStorage.removeItem("codenix_user_role");
-            window.location.href = "index.html"; 
-        }
+        // Setup Greeting Time
+        const hour = new Date().getHours();
+        let greeting = "Good Evening!";
+        if (hour < 12) greeting = "Good Morning!";
+        else if (hour < 17) greeting = "Good Afternoon!";
+        document.getElementById('greetingText').innerText = greeting;
+        if(window.innerWidth > 768) document.getElementById('greetingText').style.display = "block";
 
-        // ==========================================
-        // 4. FETCH ALL DYNAMIC DATA (Google Sheets)
-        // ==========================================
-        async function fetchAppData() {
+        // --- FETCH DATA FROM FIRESTORE ---
+        async function fetchFirebaseData() {
             try {
-                // 4A. Fetch Courses (Dynamic Unlimited Logic)
+                // 1. Fetch Courses
+                const courseSnap = await getDocs(collection(db, "Courses"));
                 const homeCourseSec = document.getElementById('homeCoursesRow');
                 const fullCourseSec = document.getElementById('fullCoursesGrid');
-                // Mocking API call for Courses (Admin panel ready)
-                const dummyCourses = [
-                    { title: "HTML Full Course", thumb: "https://images.unsplash.com/photo-1618477247222-ac60c628574e?w=500&auto=format", lang: "हिंदी में", tag: "Free", progress: 60 },
-                    { title: "CSS Mastery", thumb: "https://images.unsplash.com/photo-1507721999472-8ed4421c4af2?w=500&auto=format", lang: "हिंदी में", tag: "Premium", progress: 20 },
-                    { title: "JS Logic Building", thumb: "https://images.unsplash.com/photo-1627398240411-b4f1a268a7eb?w=500&auto=format", lang: "हिंदी में", tag: "Free", progress: 0 }
-                ];
                 homeCourseSec.innerHTML = ""; fullCourseSec.innerHTML = "";
-                dummyCourses.forEach((c, idx) => {
+                let cCount = 0;
+                courseSnap.forEach(doc => {
+                    let c = doc.data();
+                    let thumb = "https://images.unsplash.com/photo-1627398240411-b4f1a268a7eb?w=500&auto=format"; // Default Image
                     let cHTML = `
                     <div class="glass-card course-card">
-                        <div class="thumbnail" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('${c.thumb}');"></div>
-                        <h3>${c.title}</h3>
-                        <div class="course-meta"><span>${c.lang}</span> <span class="badge-free" style="${c.tag==='Premium'?'color:#facc15; background:rgba(250,204,21,0.1)':''}">${c.tag}</span></div>
-                        <div class="progress-container"><div class="progress-bar" style="width: ${c.progress}%; background: var(--primary-blue);"></div></div>
-                        <div class="progress-text">${c.progress}% Complete</div>
+                        <div class="thumbnail" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('${thumb}');"></div>
+                        <h3>${c.name}</h3>
+                        <div class="course-meta"><span>हिंदी में</span> <span class="badge-free" style="color:var(--success); background:rgba(16, 185, 129, 0.15)">Free</span></div>
+                        <div class="progress-container"><div class="progress-bar" style="width: 0%; background: var(--primary-blue);"></div></div>
+                        <div class="progress-text">0% Complete</div>
                     </div>`;
                     fullCourseSec.innerHTML += cHTML;
-                    if(idx < 3) homeCourseSec.innerHTML += cHTML;
+                    if(cCount < 3) homeCourseSec.innerHTML += cHTML;
+                    cCount++;
                 });
+                if(cCount === 0) fullCourseSec.innerHTML = "<p>No courses uploaded yet.</p>";
 
-                // 4B. Fetch Videos
-                const videoRes = await fetch(SCRIPT_URL + "?sheet=Videos");
-                const videos = await videoRes.json();
+                // 2. Fetch Videos
+                const vidSnap = await getDocs(collection(db, "Videos"));
                 const homeVidSec = document.getElementById('homeVideosSection');
                 const fullVidSec = document.getElementById('fullVideosList');
                 homeVidSec.innerHTML = ""; fullVidSec.innerHTML = "";
-                
-                if(videos.length > 0) {
-                    const reversedVids = videos.reverse();
-                    reversedVids.forEach((vid, index) => {
-                        if(!vid.VideoTitle) return;
-                        let safeTitle = vid.VideoTitle.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-                        let htmlSnippet = `
-                        <div class="video-item" onclick="openVideoModal('${vid.YouTubeLink}', '${safeTitle}')">
-                            <div class="note-info">
-                                <div class="vid-thumb"><i class="fas fa-play" style="color: #3b82f6;"></i></div>
-                                <div class="info-text">
-                                    <h4>${vid.VideoTitle}</h4><p>${vid.Category || 'Video'}</p>
-                                </div>
-                            </div>
-                            <i class="fas fa-download icon-btn" style="color:var(--primary-blue);" onclick="event.stopPropagation(); saveItem('${safeTitle}', 'Video', '${vid.YouTubeLink}')"></i>
-                        </div>`;
-                        fullVidSec.innerHTML += htmlSnippet;
-                        if(index < 4) homeVidSec.innerHTML += htmlSnippet;
-                    });
-                }
+                let vCount = 0;
+                let vidArray = [];
+                vidSnap.forEach(doc => vidArray.push(doc.data()));
+                vidArray.reverse(); // Newest first
 
-                // 4C. Fetch Notes
-                const noteRes = await fetch(SCRIPT_URL + "?sheet=Notes");
-                const notes = await noteRes.json();
+                vidArray.forEach(vid => {
+                    let safeTitle = vid.title.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+                    let htmlSnippet = `
+                    <div class="video-item" onclick="openVideoModal('${vid.link}', '${safeTitle}')">
+                        <div class="note-info">
+                            <div class="vid-thumb"><i class="fas fa-play" style="color: #3b82f6;"></i></div>
+                            <div class="info-text">
+                                <h4>${vid.title}</h4><p>${vid.course || 'Video'}</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-download icon-btn" style="color:var(--primary-blue);" onclick="event.stopPropagation(); saveItem('${safeTitle}', 'Video', '${vid.link}')"></i>
+                    </div>`;
+                    fullVidSec.innerHTML += htmlSnippet;
+                    if(vCount < 4) homeVidSec.innerHTML += htmlSnippet;
+                    vCount++;
+                });
+                if(vCount === 0) fullVidSec.innerHTML = "<p>No videos available.</p>";
+
+                // 3. Fetch PDF Notes
+                const noteSnap = await getDocs(collection(db, "Notes"));
                 const homeNoteSec = document.getElementById('homeNotesSection');
                 const fullNoteSec = document.getElementById('fullNotesList');
                 homeNoteSec.innerHTML = ""; fullNoteSec.innerHTML = "";
+                let nCount = 0;
+                let noteArray = [];
+                noteSnap.forEach(doc => noteArray.push(doc.data()));
+                noteArray.reverse();
 
-                if(notes.length > 0) {
-                    const reversedNotes = notes.reverse(); 
-                    reversedNotes.forEach((note, index) => {
-                        if(!note.NoteTitle) return;
-                        let safeNoteTitle = note.NoteTitle.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-                        let htmlSnippet = `
-                        <div class="note-item">
-                            <div class="note-info">
-                                <i class="fas fa-file-pdf" style="color: #ef4444; font-size: 24px; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;"></i>
-                                <div class="info-text">
-                                    <h4>${note.NoteTitle}</h4><p>PDF Document</p>
-                                </div>
+                noteArray.forEach(note => {
+                    let safeTitle = note.title.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+                    let htmlSnippet = `
+                    <div class="note-item">
+                        <div class="note-info">
+                            <i class="fas fa-file-pdf" style="color: #ef4444; font-size: 24px; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;"></i>
+                            <div class="info-text">
+                                <h4>${note.title}</h4><p>PDF Document</p>
                             </div>
-                            <div style="display: flex; gap: 15px; align-items: center;">
-                                <i class="fas fa-bookmark icon-btn" style="color:var(--success);" onclick="saveItem('${safeNoteTitle}', 'PDF', '${note.PDFLink}')"></i>
-                                <a href="${note.PDFLink}" target="_blank" style="color:var(--text-muted);"><i class="fas fa-external-link-alt"></i></a>
-                            </div>
-                        </div>`;
-                        fullNoteSec.innerHTML += htmlSnippet;
-                        if(index < 4) homeNoteSec.innerHTML += htmlSnippet;
-                    });
-                }
+                        </div>
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <i class="fas fa-bookmark icon-btn" style="color:var(--success);" onclick="saveItem('${safeTitle}', 'PDF', '${note.link}')"></i>
+                            <a href="${note.link}" target="_blank" style="color:var(--text-muted);"><i class="fas fa-external-link-alt"></i></a>
+                        </div>
+                    </div>`;
+                    fullNoteSec.innerHTML += htmlSnippet;
+                    if(nCount < 4) homeNoteSec.innerHTML += htmlSnippet;
+                    nCount++;
+                });
+                if(nCount === 0) fullNoteSec.innerHTML = "<p>No notes available.</p>";
 
-                // 4D. Fetch Promotional Banners
-                const bannerRes = await fetch(SCRIPT_URL + "?sheet=Banners");
-                const banners = await bannerRes.json();
+                // 4. Fetch Banners
+                const bannerSnap = await getDocs(collection(db, "Banners"));
                 const sliderContainer = document.getElementById('promoSlider');
-                
-                if(banners.length > 0) {
-                    sliderContainer.innerHTML = ""; 
-                    banners.forEach((banner, index) => {
-                        if(banner.ImageURL) {
-                            const activeClass = index === 0 ? "active-slide" : "";
-                            sliderContainer.innerHTML += `
-                                <div class="promo-slide ${activeClass}" style="background-image: url('${banner.ImageURL}');"></div>
-                            `;
-                        }
-                    });
-                    startPromoSlider();
-                } else {
-                    sliderContainer.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px; font-size:12px;">No promotional banners uploaded yet.</p>`;
-                }
+                let bCount = 0;
+                sliderContainer.innerHTML = "";
+                bannerSnap.forEach(doc => {
+                    let activeClass = bCount === 0 ? "active-slide" : "";
+                    sliderContainer.innerHTML += `<div class="promo-slide ${activeClass}" style="background-image: url('${doc.data().imageLink}');"></div>`;
+                    bCount++;
+                });
+                if(bCount === 0) sliderContainer.innerHTML = `<p style="text-align:center; padding:20px;">No promotional banners.</p>`;
+                else startPromoSlider();
 
             } catch (error) {
-                console.error("Data Load Error: ", error);
+                console.error("Firestore Error:", error);
             }
         }
 
-        // ==========================================
-        // 5. PROMO CAROUSEL SLIDER AUTO TIMING
-        // ==========================================
+        // --- REAL-TIME NOTIFICATION LISTENER ---
+        let notifCount = 0;
+        function listenForRealtimeAlerts() {
+            const unsub = onSnapshot(collection(db, "Notifications"), (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        // Skip initial load spam by checking if it's recent, or just show it 
+                        // For a real app, you'd filter by timestamp. We'll just show the latest.
+                        let data = change.doc.data();
+                        window.showToast(`<b>${data.title}</b><br>${data.msg}`);
+                        notifCount++;
+                        document.getElementById('notifBadge').innerText = notifCount;
+                    }
+                });
+            });
+        }
+
+        // --- PROMO SLIDER LOGIC ---
         let currentSlideIndex = 0;
         function startPromoSlider() {
             const slides = document.querySelectorAll('.promo-slide');
             if(slides.length <= 1) return; 
-            
             setInterval(() => {
                 slides[currentSlideIndex].classList.remove('active-slide');
                 currentSlideIndex = (currentSlideIndex + 1) % slides.length;
                 slides[currentSlideIndex].classList.add('active-slide');
-            }, 3000); 
+            }, 3500); 
         }
 
-        // ==========================================
-        // 6. LIVE CHAT SYSTEM (Frontend Logic)
-        // ==========================================
-        function sendLiveMessage() {
+        // --- LIVE CHAT & UI ---
+        window.sendLiveMessage = () => {
             const input = document.getElementById('liveChatInput');
             const msg = input.value.trim();
             if(!msg) return;
-
             const chatBox = document.getElementById('liveChatBox');
-            const userName = localStorage.getItem("codenix_user_name") || "Student";
-            
-            // Add Message to UI
-            chatBox.innerHTML += `<div class="chat-msg"><span>${userName.split(" ")[0]}:</span> ${msg}</div>`;
+            chatBox.innerHTML += `<div class="chat-msg"><span>${globalUserName.split(" ")[0]}:</span> ${msg}</div>`;
             input.value = "";
             chatBox.scrollTop = chatBox.scrollHeight;
-        }
+        };
 
-        // ==========================================
-        // 7. DOWNLOADS & OFFLINE SAVE LOGIC
-        // ==========================================
-        function saveItem(title, type, link) {
+        // --- DOWNLOADS LOGIC ---
+        window.saveItem = (title, type, link) => {
             let savedItems = JSON.parse(localStorage.getItem("codenix_downloads")) || [];
             if(savedItems.find(item => item.title === title)) {
-                alert("यह पहले से ही Downloads में सेव है!"); return;
+                window.showToast("यह पहले से ही Downloads में सेव है!"); return;
             }
             savedItems.push({ title, type, link });
             localStorage.setItem("codenix_downloads", JSON.stringify(savedItems));
-            alert("✅ " + title + " Downloads में सेव हुआ!");
-        }
+            window.showToast("✅ " + title + " Saved Offline!");
+        };
 
-        function renderDownloads() {
+        window.renderDownloads = () => {
             const container = document.getElementById('savedItemsList');
             let savedItems = JSON.parse(localStorage.getItem("codenix_downloads")) || [];
             container.innerHTML = ""; 
-            if(savedItems.length === 0) { container.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px;">No offline downloads available.</p>`; return; }
+            if(savedItems.length === 0) { container.innerHTML = `<p style="text-align:center;">No offline downloads available.</p>`; return; }
 
             savedItems.forEach((item, index) => {
                 let icon = item.type === 'PDF' ? 'fa-file-pdf' : 'fa-play-circle';
@@ -766,50 +771,42 @@
                     </div>
                 </div>`;
             });
-        }
-        function deleteItem(index) {
+        };
+
+        window.deleteItem = (index) => {
             let savedItems = JSON.parse(localStorage.getItem("codenix_downloads")) || [];
             savedItems.splice(index, 1);
             localStorage.setItem("codenix_downloads", JSON.stringify(savedItems));
-            renderDownloads(); 
-        }
+            window.renderDownloads(); 
+        };
 
-        // ==========================================
-        // 8. MULTI-FORMAT VIDEO PLAYER (MP4 + YouTube)
-        // ==========================================
+        // --- VIDEO MODAL LOGIC ---
         function getEmbedElement(url) {
-            // Agar Admin ne direct .mp4 ya .webm upload kiya hai
             if (url.endsWith(".mp4") || url.endsWith(".webm") || url.includes(".mp4?")) {
                 return `<video src="${url}" controls autoplay style="width:100%; height:100%; outline:none;"></video>`;
-            } 
-            // Agar YouTube Link hai
-            else if (url.includes("youtu.be/") || url.includes("watch?v=")) {
+            } else if (url.includes("youtu.be/") || url.includes("watch?v=")) {
                 let videoId = "";
                 if (url.includes("youtu.be/")) videoId = url.split("youtu.be/")[1].split("?")[0];
                 else if (url.includes("watch?v=")) videoId = url.split("watch?v=")[1].split("&")[0];
                 return `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&controls=1" allowfullscreen></iframe>`;
-            } 
-            // Generic Links (Google Drive etc.)
-            else {
+            } else {
                 return `<iframe src="${url}" allowfullscreen></iframe>`;
             }
         }
 
-        function openVideoModal(link, title) {
+        window.openVideoModal = (link, title) => {
             const modal = document.getElementById('videoModal');
             document.getElementById('modalVideoTitle').innerHTML = `<i class="fas fa-play-circle"></i> ${title}`;
             document.getElementById('iframeContainer').innerHTML = getEmbedElement(link);
             modal.classList.add('active');
-        }
-        function closeVideoModal() {
+        };
+        window.closeVideoModal = () => {
             document.getElementById('videoModal').classList.remove('active');
             document.getElementById('iframeContainer').innerHTML = ""; 
-        }
+        };
 
-        // ==========================================
-        // 9. REAL-TIME FILTER SEARCH
-        // ==========================================
-        document.querySelector('.search-container input').addEventListener('keyup', function(e) {
+        // --- SEARCH FILTER ---
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
             const term = e.target.value.toLowerCase();
             document.querySelectorAll('.active-page .course-card, .active-page .video-item, .active-page .note-item').forEach(el => {
                 const title = el.innerText.toLowerCase();
@@ -817,23 +814,17 @@
             });
         });
 
-        // ==========================================
-        // 10. GEMINI AI INTEGRATION
-        // ==========================================
-        function openAIModal() { document.getElementById('aiModal').classList.add('active'); }
-        function closeAIModal() { document.getElementById('aiModal').classList.remove('active'); }
-
-        async function askGemini() {
+        // --- GEMINI AI MODAL ---
+        window.openAIModal = () => document.getElementById('aiModal').classList.add('active');
+        window.closeAIModal = () => document.getElementById('aiModal').classList.remove('active');
+        
+        window.askGemini = async () => {
             const inputField = document.getElementById('aiInput');
             const question = inputField.value.trim();
             const chatBox = document.getElementById('aiChatBox');
-
             if(!question) return;
 
-            chatBox.innerHTML += `
-                <div style="align-self: flex-end; background: var(--primary-blue); padding: 12px; border-radius: 10px; border-bottom-right-radius: 0; max-width: 85%; color: white; font-size: 13px;">
-                    ${question}
-                </div>`;
+            chatBox.innerHTML += `<div style="align-self: flex-end; background: var(--primary-blue); padding: 12px; border-radius: 10px; border-bottom-right-radius: 0; max-width: 85%; color: white; font-size: 13px;">${question}</div>`;
             inputField.value = ""; 
             chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -845,29 +836,21 @@
                 chatBox.scrollTop = chatBox.scrollHeight;
 
                 const response = await fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: "You are an expert coding AI mentor for CodeNixHindi platform. Reply comprehensively in a friendly mix of Hindi and English. Question: " + question }] }]
-                    })
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "You are an expert coding AI mentor for CodeNixHindi platform. Reply comprehensively in a friendly mix of Hindi and English. Question: " + question }] }] })
                 });
 
                 const data = await response.json();
                 document.getElementById('aiLoading').remove(); 
-
                 const aiReply = data.candidates[0].content.parts[0].text;
 
-                chatBox.innerHTML += `
-                    <div style="background: var(--bg-glass); padding: 12px; border-radius: 10px; border-bottom-left-radius: 0; max-width: 85%; color: var(--text-main); font-size: 13px; line-height: 1.5;">
-                        ${aiReply.replace(/\n/g, "<br>")} 
-                    </div>`;
+                chatBox.innerHTML += `<div style="background: var(--bg-glass); padding: 12px; border-radius: 10px; border-bottom-left-radius: 0; max-width: 85%; color: var(--text-main); font-size: 13px; line-height: 1.5;">${aiReply.replace(/\n/g, "<br>")}</div>`;
                 chatBox.scrollTop = chatBox.scrollHeight;
-
             } catch (error) {
                 if(document.getElementById('aiLoading')) document.getElementById('aiLoading').remove();
                 chatBox.innerHTML += `<div style="color: var(--danger); font-size: 12px; text-align: center;">API Error: Please verify your Gemini API Key configuration.</div>`;
             }
-        }
+        };
     </script>
 </body>
 </html>
