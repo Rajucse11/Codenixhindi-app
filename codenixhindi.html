@@ -429,6 +429,23 @@
             </div>
         </div>
 
+        <div id="singleCoursePage" class="spa-page">
+            <div class="section-header" style="margin-bottom: 20px;">
+                <button class="btn btn-outline" onclick="switchPage('coursesPage')" style="padding: 5px 15px;">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <h2 class="section-title" id="openedCourseTitle" style="color: var(--accent-yellow);">Course Title</h2>
+            </div>
+
+            <h3 style="color: var(--primary-blue); margin-bottom: 10px;"><i class="fas fa-video"></i> Course Videos</h3>
+            <div class="item-list-container" id="courseSpecificVideos" style="max-height: none; margin-bottom: 30px;">
+                </div>
+
+            <h3 style="color: var(--danger); margin-bottom: 10px;"><i class="fas fa-file-pdf"></i> Course Notes</h3>
+            <div class="item-list-container" id="courseSpecificNotes" style="max-height: none;">
+                </div>
+        </div>
+
     </main>
 
     <div class="drawer-overlay" id="drawerOverlay" onclick="toggleRightMenu()"></div>
@@ -523,6 +540,8 @@
 
         // --- GLOBAL VARIABLES & FUNCTIONS FOR HTML ---
         let globalUserName = "Student";
+        let globalVideosData = []; // Saved Videos
+        let globalNotesData = [];  // Saved Notes
         
         window.showToast = (message) => {
             const toastContainer = document.getElementById('toast-container');
@@ -556,7 +575,6 @@
 
         window.logout = () => {
             signOut(auth).then(() => {
-                // Change: Ab index.html par redirect karega
                 window.location.href = "index.html";
             });
         };
@@ -572,7 +590,6 @@
                 document.getElementById('userAvatar').src = avatarUrl;
                 document.getElementById('drawerAvatarImg').src = avatarUrl;
                 
-                // Change: Banner me user ka naam set karna
                 if(document.getElementById('student-name')) {
                     document.getElementById('student-name').innerText = globalUserName;
                 }
@@ -581,7 +598,6 @@
                 fetchFirebaseData();
                 listenForRealtimeAlerts();
             } else {
-                // Not logged in -> Kick out (Redirect to index.html)
                 window.location.href = "index.html";
             }
         });
@@ -597,7 +613,7 @@
         // --- FETCH DATA FROM FIRESTORE ---
         async function fetchFirebaseData() {
             try {
-                // 1. Fetch Courses with their dynamic images
+                // 1. Fetch Courses 
                 const courseSnap = await getDocs(collection(db, "Courses"));
                 const homeCourseSec = document.getElementById('homeCoursesRow');
                 const fullCourseSec = document.getElementById('fullCoursesGrid');
@@ -605,11 +621,11 @@
                 let cCount = 0;
                 courseSnap.forEach(doc => {
                     let c = doc.data();
-                    // Database se image uthayega, agar nahi mili to default image lagayega
                     let thumb = c.imageUrl || c.thumbnailUrl || c.imageLink || "https://images.unsplash.com/photo-1627398240411-b4f1a268a7eb?w=500&auto=format"; 
+                    let safeCourseName = (c.title || c.name || 'Coding Course').replace(/'/g, "\\'");
                     
                     let cHTML = `
-                    <div class="glass-card course-card" onclick="switchPage('videosPage')">
+                    <div class="glass-card course-card" onclick="openCourseDetails('${safeCourseName}')">
                         <div class="thumbnail" style="background-image: url('${thumb}');"></div>
                         <h3>${c.title || c.name || 'Coding Course'}</h3>
                         <div class="course-meta">
@@ -639,7 +655,8 @@
                 let vCount = 0;
                 let vidArray = [];
                 vidSnap.forEach(doc => vidArray.push(doc.data()));
-                vidArray.reverse(); // Newest first
+                vidArray.reverse(); 
+                globalVideosData = vidArray; // Save globally for filtering
 
                 vidArray.forEach(vid => {
                     let safeTitle = vid.title.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -668,6 +685,7 @@
                 let noteArray = [];
                 noteSnap.forEach(doc => noteArray.push(doc.data()));
                 noteArray.reverse();
+                globalNotesData = noteArray; // Save globally for filtering
 
                 noteArray.forEach(note => {
                     let safeTitle = note.title.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -707,6 +725,57 @@
                 console.error("Firestore Error:", error);
             }
         }
+
+        // --- NEW FILTER FUNCTION: SINGLE COURSE VIEW ---
+        window.openCourseDetails = (courseName) => {
+            switchPage('singleCoursePage'); // Open the single course page
+            document.getElementById('openedCourseTitle').innerText = courseName; 
+
+            const vidContainer = document.getElementById('courseSpecificVideos');
+            const noteContainer = document.getElementById('courseSpecificNotes');
+            
+            vidContainer.innerHTML = "";
+            noteContainer.innerHTML = "";
+
+            // Filter Videos for this specific course
+            const filteredVideos = globalVideosData.filter(vid => vid.course === courseName);
+            if(filteredVideos.length > 0) {
+                filteredVideos.forEach(vid => {
+                    let safeTitle = vid.title.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+                    vidContainer.innerHTML += `
+                    <div class="video-item" onclick="openVideoModal('${vid.link}', '${safeTitle}')" style="cursor: pointer;">
+                        <div class="note-info">
+                            <div class="vid-thumb"><i class="fas fa-play" style="color: #3b82f6;"></i></div>
+                            <div class="info-text"><h4>${vid.title}</h4><p>${vid.course || ''}</p></div>
+                        </div>
+                        <i class="fas fa-download icon-btn" style="color:var(--primary-blue);" onclick="event.stopPropagation(); saveItem('${safeTitle}', 'Video', '${vid.link}')"></i>
+                    </div>`;
+                });
+            } else {
+                vidContainer.innerHTML = "<p style='color: gray; padding: 10px;'>इस कोर्स में अभी कोई वीडियो अपलोड नहीं है।</p>";
+            }
+
+            // Filter Notes for this specific course
+            const filteredNotes = globalNotesData.filter(note => note.course === courseName);
+            if(filteredNotes.length > 0) {
+                filteredNotes.forEach(note => {
+                    let safeTitle = note.title.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+                    noteContainer.innerHTML += `
+                    <div class="note-item">
+                        <div class="note-info">
+                            <i class="fas fa-file-pdf" style="color: #ef4444; font-size: 24px; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;"></i>
+                            <div class="info-text"><h4>${note.title}</h4><p>${note.course || ''}</p></div>
+                        </div>
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <i class="fas fa-bookmark icon-btn" style="color:var(--success);" onclick="saveItem('${safeTitle}', 'PDF', '${note.link}')"></i>
+                            <a href="${note.link}" target="_blank" style="color:var(--text-muted);"><i class="fas fa-external-link-alt"></i></a>
+                        </div>
+                    </div>`;
+                });
+            } else {
+                noteContainer.innerHTML = "<p style='color: gray; padding: 10px;'>इस कोर्स में अभी कोई PDF नोट्स अपलोड नहीं है।</p>";
+            }
+        };
 
         // --- REAL-TIME NOTIFICATION LISTENER ---
         let notifCount = 0;
