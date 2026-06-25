@@ -102,7 +102,6 @@
         .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px; color: white; outline: none; font-size: 13px; transition: 0.3s; }
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
-        .form-group input[type="file"] { padding: 9px 15px; }
 
         .btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 13px; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-primary { background: var(--primary); color: white; }
@@ -111,15 +110,16 @@
         .btn-danger:hover { background: var(--danger); color: white; }
         .btn-success { background: var(--success); color: white; }
 
-        /* User Table */
-        .table-responsive { width: 100%; overflow-x: auto; }
+        /* User Table & Actions */
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border); min-width: 120px; }
         th { color: var(--text-muted); font-weight: 500; }
-        .action-btns i { cursor: pointer; margin-right: 10px; font-size: 15px; transition: 0.3s; }
+        .action-btns i { cursor: pointer; margin-right: 15px; font-size: 16px; transition: 0.3s; }
         .action-btns .fa-edit { color: var(--primary); }
-        .action-btns .fa-ban { color: var(--accent); }
+        .action-btns .fa-edit:hover { color: #60a5fa; }
         .action-btns .fa-trash { color: var(--danger); }
+        .action-btns .fa-trash:hover { color: #f87171; }
 
         /* LIVE STUDIO UI */
         .studio-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
@@ -130,12 +130,6 @@
         
         .chat-control { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; min-height: 300px; }
         .chat-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 20px; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #475569; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--success); }
-        input:checked + .slider:before { transform: translateX(20px); }
 
         /* Toast System */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
@@ -160,7 +154,6 @@
             .content-area { padding: 20px; }
             .form-grid { grid-template-columns: 1fr; }
             
-            /* Hide Text of Profile on Mobile */
             .admin-profile-text { display: none; }
             .live-btn-group .btn { flex: 1; min-width: 120px; }
         }
@@ -205,13 +198,15 @@
                         <h4 style="font-size: 13px;">Admin</h4>
                         <p style="font-size: 11px; color: var(--success);">Online</p>
                     </div>
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=facc15&color=000" alt="Admin">
+                    <!-- Admin Image Updated -->
+                    <img src="rk.jpg" onerror="this.src='https://ui-avatars.com/api/?name=Admin&background=facc15&color=000'" alt="Admin">
                 </div>
             </div>
         </header>
 
         <div class="content-area">
             
+            <!-- Dashboard Tab -->
             <div id="dashboard" class="tab-panel active">
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -242,20 +237,45 @@
                 </div>
             </div>
 
+            <!-- Manage Content Tab (UPDATED) -->
             <div id="manageContent" class="tab-panel">
+                
+                <!-- Create/Edit Course Form -->
                 <div class="admin-card">
-                    <h3><i class="fas fa-folder-plus"></i> Create New Course Category</h3>
+                    <h3><i class="fas fa-folder-plus"></i> Create / Edit Course Category</h3>
                     <div class="form-grid">
-                        <div class="form-group" style="display:flex; gap:10px; align-items:flex-end;">
-                            <div style="flex:1;">
-                                <label>Course Name</label>
-                                <input type="text" id="newCourseInput" placeholder="e.g. React Native Full Course">
-                            </div>
-                            <button class="btn btn-success" onclick="addNewCourseCategory()"><i class="fas fa-plus"></i> Create</button>
+                        <div class="form-group">
+                            <label>Course Name</label>
+                            <input type="text" id="newCourseInput" placeholder="e.g. HTML Full Course">
                         </div>
+                        <div class="form-group">
+                            <label>Course Thumbnail/Photo URL (Direct Link)</label>
+                            <input type="url" id="newCourseImgInput" placeholder="https://i.ibb.co/your-image.png">
+                        </div>
+                        <div class="form-group full-width" style="display: flex; gap: 10px;">
+                            <button class="btn btn-success" id="courseSubmitBtn" onclick="saveCourseCategory()"><i class="fas fa-plus"></i> Add Course</button>
+                            <button class="btn btn-danger" id="courseCancelBtn" onclick="resetCourseForm()" style="display: none;"><i class="fas fa-times"></i> Cancel Edit</button>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 25px; margin-bottom: 10px; font-size: 14px; border-top: 1px solid var(--border); padding-top: 15px;">Manage Existing Courses</h4>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Thumbnail</th>
+                                    <th>Course Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="courseTableBody">
+                                <tr><td colspan="3" style="text-align: center;">Loading courses...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
+                <!-- Video Upload Form -->
                 <div class="admin-card">
                     <h3><i class="fas fa-film"></i> Upload Video to Course</h3>
                     <form onsubmit="handleVideoUpload(event)">
@@ -267,7 +287,7 @@
                             <div class="form-group">
                                 <label>Select Course</label>
                                 <select id="globalCourseSelect" required>
-                                    <option value="">-- Select a Course --</option>
+                                    <option value="">-- Load Ho Raha Hai --</option>
                                 </select>
                             </div>
                             <div class="form-group full-width">
@@ -283,6 +303,7 @@
                     </form>
                 </div>
 
+                <!-- Note Upload Form (UPDATED WITH DROPDOWN) -->
                 <div class="admin-card">
                     <h3><i class="fas fa-file-pdf"></i> Upload PDF Note</h3>
                     <form onsubmit="handleNoteUpload(event)">
@@ -292,6 +313,12 @@
                                 <input type="text" id="noteTitleInput" placeholder="e.g. CSS Flexbox Cheatsheet" required>
                             </div>
                             <div class="form-group">
+                                <label>Select Course</label>
+                                <select id="noteCourseSelect" required>
+                                    <option value="">-- Load Ho Raha Hai --</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
                                 <label>PDF File Link (Google Drive / Direct Link)</label>
                                 <input type="url" id="noteLinkInput" placeholder="https://drive.google.com/..." required>
                             </div>
@@ -303,6 +330,7 @@
                 </div>
             </div>
 
+            <!-- Live Studio Tab -->
             <div id="liveStudio" class="tab-panel">
                 <div class="studio-grid">
                     <div>
@@ -341,10 +369,6 @@
                             <span style="font-size: 14px; font-weight: 600;"><i class="fas fa-comments"></i> App Live Chat</span>
                             <div style="display: flex; align-items: center; gap: 10px; font-size: 12px;">
                                 Public Chat
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleChatStatus(this)">
-                                    <span class="slider"></span>
-                                </label>
                             </div>
                         </div>
                         <div style="flex: 1; padding: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-muted); font-size: 12px;">
@@ -356,6 +380,7 @@
                 </div>
             </div>
 
+            <!-- Manage Users Tab -->
             <div id="manageUsers" class="tab-panel">
                 <div class="admin-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
@@ -382,6 +407,7 @@
                 </div>
             </div>
 
+            <!-- Notifications Tab -->
             <div id="sendNotif" class="tab-panel">
                 <div class="admin-card">
                     <h3><i class="fas fa-bell"></i> Send Push Notification</h3>
@@ -405,10 +431,10 @@
                 </div>
 
                 <h4 style="font-size: 14px; margin-bottom: 15px;">Recent Notifications Sent</h4>
-                <div id="notifHistoryList">
-                    </div>
+                <div id="notifHistoryList"></div>
             </div>
 
+            <!-- Banners Tab -->
             <div id="banners" class="tab-panel">
                 <div class="admin-card">
                     <h3><i class="fas fa-image"></i> Upload App Banners</h3>
@@ -428,8 +454,7 @@
                 </div>
                 
                 <h4 style="font-size: 14px; margin-bottom: 15px;">Active Banners in App</h4>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;" id="activeBannersList">
-                    </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;" id="activeBannersList"></div>
             </div>
 
         </div>
@@ -437,11 +462,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        // --- NAYA FIREBASE AUTHENTICATION IMPORT KIYA HAI ---
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
-        // Firebase Configuration
+        // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyB9dKvLboAoBF8q8rGcZ_DXvm9cYbzPlhM",
             authDomain: "codenixhindi.firebaseapp.com",
@@ -452,27 +476,20 @@
             measurementId: "G-GL7RHHHZVC"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app); // NAYA AUTH SYSTEM BHI CHALU KIYA BINA ISKE LOGIN KA PATA NAHI CHALTA
+        const auth = getAuth(app);
 
-        // --- MASTER SECURITY GUARD ---
         const ADMIN_EMAIL = "dhurendramahto89@gmail.com"; 
 
         onAuthStateChanged(auth, (user) => {
             if (!user) {
-                // Agar bina login ke aaya hai toh wapas bhej do
                 window.location.href = "login.html";
-            } else {
-                // Agar login karke aaya hai toh check karo kya wo sach mein malik hai
-                if (user.email.toLowerCase() !== ADMIN_EMAIL) {
-                    alert("⚠️ Access Denied! Sirf Admin hi yahan aa sakte hain.");
-                    window.location.href = "codenixhindi.html"; // Chupke se aaye hue student ko bahar fenko
-                }
+            } else if (user.email.toLowerCase() !== ADMIN_EMAIL) {
+                alert("⚠️ Access Denied! Sirf Admin hi yahan aa sakte hain.");
+                window.location.href = "index.html"; 
             }
         });
-
 
         // --- GLOBAL UI FUNCTIONS ---
         window.toggleSidebar = () => {
@@ -524,56 +541,123 @@
             }, 3000);
         };
 
-        // --- ASLI LOGOUT FUNCTION ---
+        // --- LOGOUT TO INDEX.HTML ---
         window.logoutAdmin = () => {
-            if(confirm("Are you sure you want to logout?")) {
+            if(confirm("Are you sure you want to logout from Admin Panel?")) {
                 signOut(auth).then(() => {
-                    window.location.href = "login.html"; // Firebase se bahar nikal kar wapas login par 
+                    window.location.href = "index.html"; 
                 }).catch((error) => {
                     alert("Error logging out!");
                 });
             }
         };
 
-        // --- FIREBASE LOGIC: LOAD COURSES ---
+        // --- COURSE MANAGEMENT (ADD, EDIT, DELETE) ---
+        let editingCourseId = null;
+
         async function loadCourses() {
             const querySnapshot = await getDocs(collection(db, "Courses"));
             const globalSelect = document.getElementById('globalCourseSelect');
+            const noteSelect = document.getElementById('noteCourseSelect');
             const liveSelect = document.getElementById('liveCourseSelect');
+            const tbody = document.getElementById('courseTableBody');
             
             let optionsHTML = '<option value="">-- Select a Course --</option>';
+            tbody.innerHTML = '';
             let count = 0;
-            querySnapshot.forEach((doc) => {
-                optionsHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
+
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                optionsHTML += `<option value="${data.name}">${data.name}</option>`;
+                
+                let safeName = data.name.replace(/'/g, "\\'");
+                let safeImg = (data.imageUrl || "").replace(/'/g, "\\'");
+                let displayImg = data.imageUrl || 'https://via.placeholder.com/50x50?text=No+Img';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td><img src="${displayImg}" style="width: 50px; height: 40px; object-fit: cover; border-radius: 5px;"></td>
+                        <td style="font-weight: 500;">${data.name}</td>
+                        <td class="action-btns">
+                            <i class="fas fa-edit" title="Edit Course" onclick="startEditCourse('${docSnap.id}', '${safeName}', '${safeImg}')"></i>
+                            <i class="fas fa-trash" title="Delete Course" onclick="deleteDocItem('Courses', '${docSnap.id}')"></i>
+                        </td>
+                    </tr>
+                `;
                 count++;
             });
 
             globalSelect.innerHTML = optionsHTML;
+            noteSelect.innerHTML = optionsHTML; 
             liveSelect.innerHTML = optionsHTML;
             document.getElementById('dashCourseCount').innerText = count;
+            
+            if(count === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center;">Koi course nahi mila.</td></tr>`;
+            }
         }
 
-        window.addNewCourseCategory = async () => {
-            const input = document.getElementById('newCourseInput');
-            const newCourse = input.value.trim();
-            if(!newCourse) { alert("Please enter a course name!"); return; }
+        window.saveCourseCategory = async () => {
+            const name = document.getElementById('newCourseInput').value.trim();
+            const imageUrl = document.getElementById('newCourseImgInput').value.trim();
             
-            await addDoc(collection(db, "Courses"), { name: newCourse, createdAt: new Date() });
-            input.value = "";
-            showToast(`Course '${newCourse}' created in Database!`);
-            loadCourses();
+            if(!name) { alert("Please enter a course name!"); return; }
+            
+            const btn = document.getElementById('courseSubmitBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            try {
+                if (editingCourseId) {
+                    await updateDoc(doc(db, "Courses", editingCourseId), { name, imageUrl });
+                    showToast("Course Updated Successfully!");
+                } else {
+                    await addDoc(collection(db, "Courses"), { name, imageUrl, createdAt: new Date() });
+                    showToast(`Course '${name}' Created!`);
+                }
+                resetCourseForm();
+                loadCourses(); 
+            } catch (error) {
+                alert("Error saving course!");
+            } finally {
+                btn.disabled = false;
+            }
         };
 
-        // --- FIREBASE LOGIC: UPLOADS ---
+        window.startEditCourse = (id, name, img) => {
+            editingCourseId = id;
+            document.getElementById('newCourseInput').value = name;
+            document.getElementById('newCourseImgInput').value = img;
+            
+            document.getElementById('courseSubmitBtn').innerHTML = '<i class="fas fa-save"></i> Update Course';
+            document.getElementById('courseSubmitBtn').className = 'btn btn-primary';
+            document.getElementById('courseCancelBtn').style.display = 'inline-flex';
+            
+            window.scrollTo(0, 0); 
+        };
+
+        window.resetCourseForm = () => {
+            editingCourseId = null;
+            document.getElementById('newCourseInput').value = '';
+            document.getElementById('newCourseImgInput').value = '';
+            
+            document.getElementById('courseSubmitBtn').innerHTML = '<i class="fas fa-plus"></i> Add Course';
+            document.getElementById('courseSubmitBtn').className = 'btn btn-success';
+            document.getElementById('courseCancelBtn').style.display = 'none';
+        };
+
+        // --- UPLOADS (Videos & Notes mapped to course) ---
         window.handleVideoUpload = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
-            btn.disabled = true;
-
             const title = document.getElementById('videoTitleInput').value;
             const course = document.getElementById('globalCourseSelect').value;
             const link = document.getElementById('videoLinkInput').value;
+
+            if(!course) { alert("Please select a Course first!"); return; }
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+            btn.disabled = true;
 
             try {
                 await addDoc(collection(db, "Videos"), { title, course, link, createdAt: new Date() });
@@ -591,14 +675,17 @@
         window.handleNoteUpload = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
+            const title = document.getElementById('noteTitleInput').value;
+            const course = document.getElementById('noteCourseSelect').value; 
+            const link = document.getElementById('noteLinkInput').value;
+
+            if(!course) { alert("Please select a Course for this PDF!"); return; }
+
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
             btn.disabled = true;
 
-            const title = document.getElementById('noteTitleInput').value;
-            const link = document.getElementById('noteLinkInput').value;
-
             try {
-                await addDoc(collection(db, "Notes"), { title, link, createdAt: new Date() });
+                await addDoc(collection(db, "Notes"), { title, course, link, createdAt: new Date() });
                 showToast("PDF Note Published successfully!");
                 e.target.reset();
                 updateDashboardStats();
@@ -631,7 +718,6 @@
             }
         };
 
-        // --- FIREBASE LOGIC: NOTIFICATIONS ---
         window.sendPushNotification = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
@@ -654,7 +740,7 @@
             }
         };
 
-        // --- FETCH & DISPLAY DATA ---
+        // --- DASHBOARD DATA FETCHING (Banners, Users, Notifs) ---
         async function loadNotifications() {
             const list = document.getElementById('notifHistoryList');
             list.innerHTML = "";
@@ -718,17 +804,19 @@
             document.getElementById('dashNoteCount').innerText = noteSnap.size;
         }
 
+        // --- DELETE UNIVERSAL ITEM ---
         window.deleteDocItem = async (collectionName, docId) => {
             if(confirm(`Are you sure you want to delete this from ${collectionName}?`)) {
                 await deleteDoc(doc(db, collectionName, docId));
                 showToast("Item deleted successfully.");
+                if(collectionName === 'Courses') loadCourses();
                 if(collectionName === 'Banners') loadBanners();
                 if(collectionName === 'Users') loadStudents();
                 updateDashboardStats();
             }
         };
 
-        // --- LIVE STUDIO LOGIC (WebRTC Mock) ---
+        // --- LIVE STUDIO LOGIC (RESTORED COMPLETELY) ---
         let stream = null;
         const videoElement = document.getElementById('livePreview');
         const cameraIcon = document.getElementById('cameraOffIcon');
@@ -800,3 +888,4 @@
     </script>
 </body>
 </html>
+
